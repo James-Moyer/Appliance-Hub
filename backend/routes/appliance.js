@@ -11,9 +11,6 @@ router.get('/', ApplianceController.getAllAppliances);
 //  Get Appliance(s) by Owner
 router.get('/owner', ApplianceController.getApplianceByOwner); 
 
-//  Get Appliance by ID
-router.get('/:applianceId', ApplianceController.getAllAppliances); 
-
 //  Update Appliance
 router.put('/:applianceId', ApplianceController.updateAppliance); 
 

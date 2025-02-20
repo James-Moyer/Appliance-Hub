@@ -1,4 +1,4 @@
-const { database, ref, set, get, update, remove, child } = require('../firebaseConfig');
+const { db } = require('../firebaseAdmin');
 const ApplianceModel = require('../models/ApplianceModel');
 const { v4: uuidv4 } = require('uuid'); // To generate unique IDs
 
@@ -16,17 +16,14 @@ const ApplianceController = {
         // Validate input using Joi schema
         const { error, value } = ApplianceModel.validate(fullData);
         if (error) {
-            return res.status(400).json({ error });
+            return res.status(400).json({ error: error.details[0].message });
         }
 
         try {
-            const applianceId = uuidv4(); // Generate unique ID for the appliance
+            const applianceId = uuidv4(); // Generate unique ID
 
-            // Create a reference in the Realtime Database
-            const applianceRef = ref(database, `appliances/${applianceId}`);
-
-            // Set appliance data
-            await set(applianceRef, {
+            // Use Admin SDK to set data
+            await db.ref(`appliances/${applianceId}`).set({
                 ...value,
                 applianceId
             });
@@ -40,8 +37,7 @@ const ApplianceController = {
     // Get All Appliances
     getAllAppliances: async (req, res) => {
         try {
-            const appliancesRef = ref(database, 'appliances');
-            const snapshot = await get(appliancesRef);
+            const snapshot = await db.ref('appliances').once('value');
 
             if (!snapshot.exists()) {
                 return res.status(404).json({ message: 'No appliances found' });
@@ -55,25 +51,23 @@ const ApplianceController = {
 
     // Get Appliance by Owner
     getApplianceByOwner: async (req, res) => {
-        const { ownerUsername } = req.query; // Pass ownerUsername as query param
-    
+        const { ownerUsername } = req.query;
+
         try {
-            const appliancesRef = ref(database, 'appliances');
-            const snapshot = await get(appliancesRef);
-    
+            const snapshot = await db.ref('appliances').once('value');
+
             if (!snapshot.exists()) {
                 return res.status(404).json({ message: 'No appliances found' });
             }
-    
+
             const appliances = snapshot.val();
-            //  Filter by ownerUsername
             const filtered = Object.values(appliances).filter(appliance => appliance.ownerUsername === ownerUsername);
-    
+
             if (filtered.length === 0) {
                 return res.status(404).json({ message: 'No appliances found for this user' });
             }
-    
-            res.status(200).json(filtered); // Send back all appliances for the user
+
+            res.status(200).json(filtered);
         } catch (error) {
             res.status(500).json({ error: error.message });
         }
@@ -83,30 +77,41 @@ const ApplianceController = {
     updateAppliance: async (req, res) => {
         const { applianceId } = req.params;
         const updates = req.body;
-
-        // Validate updates using Joi schema
-        const { error } = ApplianceModel.validate({ ...updates, created: new Date() });
-        if (error) {
-            return res.status(400).json({ error });
-        }
-
+    
         try {
-            const applianceRef = ref(database, `appliances/${applianceId}`);
-
-            await update(applianceRef, updates);
+            // Make ALL fields optional for update
+            const allFields = Object.keys(ApplianceModel.schema.describe().keys);
+        
+            const { error } = ApplianceModel.schema
+                .fork(allFields, (field) => field.optional()) // Make all fields optional
+                .validate(updates);
+    
+            
+            if (error) {
+                const errorMessage = error.details ? error.details[0].message : error.message;
+                return res.status(400).json({ error: errorMessage });
+            }
+    
+            // Reference to the specific appliance in the database
+            const applianceRef = db.ref(`appliances/${applianceId}`);
+    
+            // Apply the partial updates
+            await applianceRef.update(updates);
+    
             res.status(200).json({ message: 'Appliance updated successfully' });
         } catch (err) {
             res.status(500).json({ error: err.message });
         }
     },
+    
 
     // Delete Appliance
     deleteAppliance: async (req, res) => {
         const { applianceId } = req.params;
 
         try {
-            const applianceRef = ref(database, `appliances/${applianceId}`);
-            await remove(applianceRef);
+            const applianceRef = db.ref(`appliances/${applianceId}`);
+            await applianceRef.remove();
 
             res.status(200).json({ message: 'Appliance deleted successfully' });
         } catch (err) {
