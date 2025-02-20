@@ -3,6 +3,7 @@ const Joi = require('joi');
 class UserModel {
     static schema = Joi.object({
         username: Joi.string().max(24).required(), // Max 24 chars, we can change this
+        password: Joi.string().pattern(/^[a-zA-Z0-9!@#$%^&*_]{8,24}$/).required(), // This will be removed once we get auth set up
         email: Joi.string().email({tlds: {allow: ['edu']}}).required(),
         location: Joi.string().valid("Sandburg East", "Sandburg North", "Sandburg South", "Sandburg West").required(), // Just Sandburg for now
         floor: Joi.number().greater(0).when('location', { // Different max floor depending on building, numbers taken from wikipedia

@@ -1,8 +1,8 @@
 const express= require('express');
 const app = express();
 
-const loginRoute = require('./api/routes/login');
-const profileRoute = require('./api/routes/profile')
+const loginRoute = require('./routes/login');
+const profileRoute = require('./routes/profile')
 
 app.use('/login', loginRoute);
 
