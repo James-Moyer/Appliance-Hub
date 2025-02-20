@@ -8,8 +8,13 @@ const ApplianceController = {
     createAppliance: async (req, res) => {
         const applianceData = req.body;
 
+        const fullData = {
+            ...applianceData,
+            created: new Date().toISOString()
+        };
+
         // Validate input using Joi schema
-        const { error, value } = ApplianceModel.validate(applianceData);
+        const { error, value } = ApplianceModel.validate(fullData);
         if (error) {
             return res.status(400).json({ error });
         }
@@ -23,8 +28,7 @@ const ApplianceController = {
             // Set appliance data
             await set(applianceRef, {
                 ...value,
-                applianceId,
-                created: new Date().toISOString()
+                applianceId
             });
 
             res.status(201).json({ message: 'Appliance created successfully', applianceId });
