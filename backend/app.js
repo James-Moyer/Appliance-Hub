@@ -7,13 +7,13 @@ app.use(cors());
 app.use(bodyParser.json());
 
 const loginRoute = require('./routes/login');
-const profileRoute = require('./routes/profile');
+const profileRoute = require('./routes/user');
 const applianceRoute = require('./routes/appliance');
 
 app.use('/login', loginRoute);
 
-app.use('/profile', profileRoute);
-app.use('/routes/appliance', applianceRoute);
+app.use('/user', profileRoute);
+app.use('/appliance', applianceRoute);
 
 app.use((req, res, next) => {
     res.status(200).json({
