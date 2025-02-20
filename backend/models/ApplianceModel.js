@@ -1,6 +1,6 @@
 const Joi = require("joi");
 
-class UserModel {
+class ApplianceModel {
     static schema = Joi.object({
         ownerUsername: Joi.string().max(24).require(),
         name: Joi.string().max(64).require(),
@@ -20,3 +20,5 @@ class UserModel {
         }
     };
 };
+
+module.exports = ApplianceModel;
