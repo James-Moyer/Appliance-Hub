@@ -3,7 +3,7 @@ const router = express.Router();
 const ApplianceController = require('../controllers/ApplianceController');
 
 //  Create Appliance
-router.post('/', ApplianceController.createAppliance); 
+router.post('/', ApplianceController.createAppliance);
 
 //  Get All Appliances
 router.get('/', ApplianceController.getAllAppliances); 

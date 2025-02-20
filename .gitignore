@@ -33,6 +33,9 @@ yarn-error.*
 .env*.local
 *.env
 
+# Keizan's testing file
+backend/controllers/tester.js
+
 # typescript
 *.tsbuildinfo
 

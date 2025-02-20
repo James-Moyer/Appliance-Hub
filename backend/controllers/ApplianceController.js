@@ -6,17 +6,18 @@ const ApplianceController = {
 
     // Create Appliance
     createAppliance: async (req, res) => {
+        
         const applianceData = req.body;
-
+        
         const fullData = {
             ...applianceData,
             created: new Date().toISOString()
         };
 
         // Validate input using Joi schema
-        const { error, value } = ApplianceModel.validate(fullData);
-        if (error) {
-            return res.status(400).json({ error: error.details[0].message });
+        const validated = ApplianceModel.validate(fullData); // Should we also check that a user exists w/ the given ownerUsername?
+        if (validated.error) {
+            return res.status(400).json({ error: validated.error.message });
         }
 
         try {
@@ -24,7 +25,7 @@ const ApplianceController = {
 
             // Use Admin SDK to set data
             await db.ref(`appliances/${applianceId}`).set({
-                ...value,
+                ...validated,
                 applianceId
             });
 

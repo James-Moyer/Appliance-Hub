@@ -14,9 +14,9 @@ class ApplianceModel {
     static validate(object) {
         const { error, value } = this.schema.validate(object);  // Fixed "schema" reference
         if (error) {
-            return { error: error.details[0].message };
+            return { error: error.details[0] };
         } else {
-            return { value };
+            return value;
         }
     }
 }
