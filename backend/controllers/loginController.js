@@ -1,4 +1,3 @@
-// controllers/loginController.js
 const { auth, db } = require('../firebaseAdmin');
 
 const loginController = {
