@@ -10,10 +10,9 @@ const loginRoute = require('./routes/login');
 const profileRoute = require('./routes/user');
 const applianceRoute = require('./routes/appliance');
 
-app.use('/routes/login', loginRoute);
-
-app.use('/routes/user', profileRoute);
-app.use('/routes/appliance', applianceRoute);
+app.use('/login', loginRoute);
+app.use('/user', profileRoute);
+app.use('/appliance', applianceRoute);
 
 app.use((req, res, next) => {
     res.status(200).json({

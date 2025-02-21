@@ -4,15 +4,9 @@ const UserModel = require('../models/UserModel.js');
 const UserController = {
 
     createUser: async (req, res) => {
-        const { email, password, username, ...otherInfo } = req.body;
-
-        if (!email || !password || !username) {
-            return res.status(400).json({ error: 'Email, password, and username are required' });
-        }
+        const { password, ...otherInfo } = req.body;
 
         const userinfo = {
-            username,
-            email,
             ...otherInfo,
             created: Date.now()
         };
@@ -23,6 +17,9 @@ const UserController = {
             return res.status(400).json({ error: valobj.error.message })
         }
 
+        if (!password) {
+            return res.status(400).json({ error: 'Password not entered!' });
+        }
 
         try {
             // create user in firebase auth
