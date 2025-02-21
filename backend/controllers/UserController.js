@@ -4,9 +4,16 @@ const UserModel = require('../models/UserModel.js');
 const UserController = {
 
     createUser: async (req, res) => {
+        const { email, password, username, ...otherInfo } = req.body;
+
+        if (!email || !password || !username) {
+            return res.status(400).json({ error: 'Email, password, and username are required' });
+        }
 
         const userinfo = {
-            ...req.body,
+            username,
+            email,
+            ...otherInfo,
             created: Date.now()
         };
 
@@ -18,10 +25,26 @@ const UserController = {
 
 
         try {
-            reference = db.ref('users/' + valobj.username);
-            await reference.set(valobj);
+            // create user in firebase auth
+            const userRecord = await auth.createUser({
+                email,
+                password,
+                displayName: username,
+            });
 
-            res.status(201).json({ message: 'User created successfully', username: valobj.username });
+            // prepare info to store in user db
+            const userToSave = {
+                uid: userRecord.uid, // Firebase UID
+                username,
+                email,
+                ...otherInfo,
+                created: Date.now()
+            };
+            
+            // save info in db
+            await db.ref('users/' + username).set(userToSave);
+
+            res.status(201).json({ message: 'User created successfully', uid: userRecord.uid });
         } catch(err) {
             res.status(500).json({ error: err.message });
         }
@@ -93,8 +116,23 @@ const UserController = {
         const username = req.params.username;
 
         try {
-            const applianceRef = db.ref('users/' + username);
-            await applianceRef.remove();
+            // Get user UID from Realtime Database
+            const ref = db.ref('users/' + username);
+            const snapshot = await ref.once('value');
+
+            if (!snapshot.exists()) {
+                return res.status(404).json({ message: 'No user found with specified username' });
+            }
+
+            const { uid } = snapshot.val();
+
+            // Delete from Firebase Auth
+            if (uid) {
+                await auth.deleteUser(uid);
+            }
+
+            // Delete from Realtime Database
+            await ref.remove();
 
             res.status(200).json({ message: 'user deleted successfully' });
         } catch (err) {
