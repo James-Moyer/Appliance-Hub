@@ -24,22 +24,20 @@ const UserController = {
         try {
             // create user in firebase auth
             const userRecord = await auth.createUser({
-                email,
-                password,
-                displayName: username,
+                email: userinfo.email,
+                password: userinfo.password,
+                displayName: userinfo.username,
             });
 
             // prepare info to store in user db
             const userToSave = {
                 uid: userRecord.uid, // Firebase UID
-                username,
-                email,
                 ...otherInfo,
                 created: Date.now()
             };
             
             // save info in db
-            await db.ref('users/' + username).set(userToSave);
+            await db.ref('users/' + userinfo.username).set(userToSave);
 
             res.status(201).json({ message: 'User created successfully', uid: userRecord.uid });
         } catch(err) {
