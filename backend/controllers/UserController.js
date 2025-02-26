@@ -14,11 +14,11 @@ const UserController = {
         const valobj = UserModel.newValidate(userinfo); // Validate object
 
         if (valobj.error) {
-            return res.status(400).json({ error: valobj.error.message })
+            return res.status(400).json({ message: valobj.error.message })
         }
 
         if (!password) {
-            return res.status(400).json({ error: 'Password not entered!' });
+            return res.status(400).json({ message: 'Password not entered!' });
         }
 
         try {
@@ -37,11 +37,11 @@ const UserController = {
             };
             
             // save info in db
-            await db.ref('users/' + userinfo.username).set(userToSave);
+            await db.ref('users/' + userRecord.uid).set(userToSave);
 
             res.status(201).json({ message: 'User created successfully', uid: userRecord.uid });
         } catch(err) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ message: err.message });
         }
     },
     
@@ -54,7 +54,7 @@ const UserController = {
             }
             res.status(200).json(snapshot.val());
         } catch (err) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ message: err.message });
         }
     },
 
@@ -77,7 +77,7 @@ const UserController = {
             res.status(200).json(user);
 
         } catch (err) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ message: err.message });
         }
     },
     
@@ -89,7 +89,7 @@ const UserController = {
         try {
             const valobj = UserModel.updateValidate(updates);
             if (valobj.error) {
-                return res.status(400).json({ error: valobj.error.message });
+                return res.status(400).json({ message: valobj.error.message });
             }
 
             const ref = db.ref('users/' + username);
@@ -103,7 +103,7 @@ const UserController = {
 
             res.status(200).json({ message: 'User updated successfully' });
         } catch (err) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ message: err.message });
         }
     },
 
@@ -131,7 +131,7 @@ const UserController = {
 
             res.status(200).json({ message: 'user deleted successfully' });
         } catch (err) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ message: err.message });
         }
     }
 

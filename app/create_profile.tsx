@@ -20,16 +20,35 @@ export default function CreateProfile() {
   };
 
   // Form validation & submission
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!form.username || !form.password || !form.email || !form.location || !form.floor) {
       Alert.alert('Error', 'Please fill in all fields.');
       return;
     }
-    console.log('Form submitted:', form);
-    // TODO make the API call to create the profile
-    
-    // Redirect to home page after submitting
-    router.push('/');
+
+    try {
+      const response = await fetch('http://localhost:3000/user', { // If running on an emulator, use 'http://{ip_address}:3000/user'
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(form),
+      });
+
+      if (response.ok) {
+        Alert.alert('Success', 'Profile created successfully.');
+        // Redirect to home page after submitting
+        router.push('/');
+      } else {
+        const data = await response.json();
+        Alert.alert('Error', data.message);
+        return;
+      }
+
+    } catch (error) {
+      Alert.alert('Error', 'An error occurred. Please try again.');
+    }
+
   };
 
   return (
