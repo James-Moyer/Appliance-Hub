@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Keyboard, TouchableWithoutFeedback } from 'react-native';
-import { useRouter } from 'expo-router';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Keyboard, TouchableWithoutFeedback} from 'react-native';
+import { useRouter, Link } from 'expo-router';
 
 export default function CreateProfile() {
   const router = useRouter();
@@ -95,9 +95,11 @@ export default function CreateProfile() {
           keyboardType="numeric"
         />
 
-        <TouchableOpacity style={styles.button} onPress={handleSubmit}>
-          <Text style={styles.buttonText}>Submit</Text>
-        </TouchableOpacity>
+        <Link href="/profile_page" asChild>
+          <TouchableOpacity style={styles.button} onPress={handleSubmit}>
+            <Text style={styles.buttonText}>Submit</Text>
+          </TouchableOpacity>
+        </Link>
       </View>
     </TouchableWithoutFeedback>
   );
