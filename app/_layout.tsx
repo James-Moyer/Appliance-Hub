@@ -20,6 +20,13 @@ export default function Layout() {
           }}
         />
         <Drawer.Screen
+          name="requestBoard" // This is the name of the page and must match the url from root
+          options={{
+            drawerLabel: 'Requests',
+            title: 'Request Board',
+          }}
+        />
+        <Drawer.Screen
           name="create_profile"
           options={{
             drawerLabel: '',
