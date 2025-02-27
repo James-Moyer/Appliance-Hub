@@ -1,5 +1,6 @@
-const { auth } = require('../firebaseAdmin');
+const { auth } = require('../firebaseAdmin.js');
 
+// I don't think we need the whole class, just the function
 // const loginController = {
 
 //   login: async (req, res) => {
@@ -33,21 +34,20 @@ const { auth } = require('../firebaseAdmin');
 
 // module.exports = loginController;
 
-export async function verifyLogin(token) {
+async function verifyLogin(token) {
     // Verifies given token using firebase auth
     
     try {
-        const decodedToken = await auth.verifyIdToken(idToken); // Should we also be checking for expired/revoked tokens?
-        if (decodedToken) { // Check for properly returned value- idk what a "rejected promise" looks like
+        const decodedToken = await auth.verifyIdToken(token, true); // Also checking for expired/revoked tokens
+        console.log("decodedToken");
+        if (decodedToken) { // Check for properly returned value
             return decodedToken.uid;
         } else {
-            return 0;
+            return 0; // This shouldn't happen bc rejected promise just throws an error(?)
         }
-    } catch (auth.user-disabled err) { // If user is disabled
-        return {err: 0}; // Tell higher-level method to deal with it?
-    } catch (auth.id-token-revoked err)  {
-        return {err: 1}; // is is possible to propagate only certain error types?
-    } catch (err) { // Rest of the errors, probably a comms fail w/ Firebase
-        return {err: 2};
+    } catch (err) { 
+        return {error: err}; // Return error , err.errorInfo contains just the code and message
     }
-}
+};
+
+module.exports = verifyLogin;

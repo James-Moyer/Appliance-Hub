@@ -48,30 +48,34 @@ const UserController = {
         }
     },
     
-    getAllUsers: async (req, res) => { // When are we really gonna use this?
-        try {
+    getAllUsers: async (req, res) => {
         const token = req.header.sessionToken;
 
-        ver = verifyLogin(token);
+        try {
+            uid = verifyLogin(token);
 
-        if (!ver) { // Verification failed
-            return res.status(400).json({ message: "Bad session, please log in." });
-        } else if (ver.err) { // Dealing w errors
-            switch (ver.err) {
-                case (0) :
-                    return res.status(400).json({ message: "Requesting User's account is disabled, login with a different account." });
-                case (1) :
-                    return res.status(400).json({ message: "Requesting User's session is expired, please log back in." });
-                case (2) :
-                    return res.status(500).json({ message: "Internal server error! Please try again" });
-            }
-        };
+            if (uid.error) { // Verification failed
+                return res.status(400).json({ message: "Bad session, please log in." }); // These should be updated to be more detailed? Firebase has LOTS of error options!
+            };
+
             const snapshot = await db.ref('users').once('value');
 
             if (!snapshot.exists()) {
                 return res.status(204).json({ message: 'No users found' });
             }
-            res.status(200).json(snapshot.val());
+
+            users = snapshot.val();
+
+            for (user in users) { // Automatically apply privacy prefs for every user
+                if (!user.showDorm) {
+                    delete user.location;
+                }
+                if (!user.showFloor) {
+                    delete user.floor;
+                }
+            }
+
+            res.status(200).json(users);
         } catch (err) {
             res.status(500).json({ message: err.message });
         }
@@ -79,23 +83,19 @@ const UserController = {
 
     getUser: async (req, res) => {
         /*
-        Expects req body to contain json object w/ username field, will change to uid?
+        Expects req body to contain json object w/ uid field
         */
-        const username = req.params.username; // Should be changed to uid?
+        const target = req.params.uid;
         const token = req.header.sessionToken;
+        const applyPrivacyPrefs = false;
 
-        ver = verifyLogin(token);
+        uid = verifyLogin(token);
 
-        if (!ver) { // Verification failed
-            return res.status(400).json({ message: "Bad session, please log in." });
-        } else if (ver.err) { // Dealing w errors
-            switch (ver.err) {
-                case (0) :
-                    return res.status(400).json({ message: "Requesting User's account is disabled, login with a different account." });
-                case (1) :
-                    return res.status(400).json({ message: "Requesting User's session is expired, please log back in." });
-                case (2) :
-                    return res.status(500).json({ message: "Internal server error! Please try again" });
+        if (uid.error) { // Verification failed
+            return res.status(400).json({ message: "Bad session, please log in." }); // These should be updated to be more detailed? Firebase has LOTS of error options!
+        } else { // Successful case
+            if (target != uid) { // Data will be restricted if viewing someone else's data
+                applyPrivacyPrefs = true;
             }
         };
 
@@ -109,6 +109,15 @@ const UserController = {
 
             const user = snapshot.val();
 
+            if (applyPrivacyPrefs) { // Applying privacy settings
+                if (!user.showDorm) {
+                    delete user.location;
+                }
+                if (!user.showFloor) {
+                    delete user.floor;
+                }
+            }
+
             res.status(200).json(user);
 
         } catch (err) {
@@ -117,22 +126,17 @@ const UserController = {
     },
     
     updateUser: async (req, res) => {
-        const username = req.params.username; // Change to uid eventually
+        const target = req.params.uid;
         const updates = req.body;
         const token = req.header.sessionToken;
 
-        ver = verifyLogin(token);
+        uid = verifyLogin(token);
 
-        if (!ver) { // Verification failed
+        if (uid.error) { // Verification failed
             return res.status(400).json({ message: "Bad session, please log in." });
-        } else if (ver.err) { // Dealing w errors
-            switch (ver.err) {
-                case (0) :
-                    return res.status(400).json({ message: "Requesting User's account is disabled, login with a different account." });
-                case (1) :
-                    return res.status(400).json({ message: "Requesting User's session is expired, please log back in." });
-                case (2) :
-                    return res.status(500).json({ message: "Internal server error! Please try again" });
+        } else { // Successful case
+            if (target != uid) { // Users can only send requests to update their own account
+                return res.status(400).json({message: "Cannot update another user's profile!"});
             }
         };
 
@@ -142,7 +146,7 @@ const UserController = {
                 return res.status(400).json({ message: valobj.error.message });
             }
 
-            const ref = db.ref('users/' + username);
+            const ref = db.ref('users/' + target);
 
             const snapshot = await ref.once('value');
             if(!snapshot.exists()) {
@@ -158,39 +162,29 @@ const UserController = {
     },
 
     deleteUser: async (req, res) => {
-        const username = req.params.username; // Change to uid
+        const target = req.params.uid
         const token = req.header.sessionToken;
 
-        ver = verifyLogin(token);
+        uid = verifyLogin(token);
 
-        if (!ver) { // Verification failed
+        if (uid.error) { // Verification failed
             return res.status(400).json({ message: "Bad session, please log in." });
-        } else if (ver.err) { // Dealing w errors
-            switch (ver.err) {
-                case (0) :
-                    return res.status(400).json({ message: "Requesting User's account is disabled, login with a different account." });
-                case (1) :
-                    return res.status(400).json({ message: "Requesting User's session is expired, please log back in." });
-                case (2) :
-                    return res.status(500).json({ message: "Internal server error! Please try again" });
+        } else { // Successful case
+            if (target != uid) { // Users can only send requests to delete their own account
+                return res.status(400).json({message: "Cannot delete another user's profile!"});
             }
         };
 
         try {
-            // Get user UID from Realtime Database
-            const ref = db.ref('users/' + username);
+            const ref = db.ref('users/' + target);
             const snapshot = await ref.once('value');
 
             if (!snapshot.exists()) {
-                return res.status(404).json({ message: 'No user found with specified username' });
+                return res.status(404).json({ message: 'No user found with specified uid' }); // This should never happen!
             }
-
-            const { uid } = snapshot.val();
 
             // Delete from Firebase Auth
-            if (uid) {
-                await auth.deleteUser(uid);
-            }
+            await auth.deleteUser(uid);
 
             // Delete from Realtime Database
             await ref.remove();
