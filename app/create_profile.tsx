@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Keyboard, TouchableWithoutFeedback } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, Link } from 'expo-router';
 
 export default function CreateProfile() {
   const router = useRouter();
@@ -137,4 +137,3 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 });
-
