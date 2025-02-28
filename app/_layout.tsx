@@ -13,14 +13,14 @@ export default function Layout() {
           }}
         />
         <Drawer.Screen
-          name="profile_page" // This is the name of the page and must match the url from root
+          name="profile_page"
           options={{
             drawerLabel: 'Profile Page',
             title: 'Profile Page',
           }}
         />
         <Drawer.Screen
-          name="requestBoard" // This is the name of the page and must match the url from root
+          name="requestBoard"
           options={{
             drawerLabel: 'Requests',
             title: 'Request Board',
@@ -29,23 +29,19 @@ export default function Layout() {
         <Drawer.Screen
           name="create_profile"
           options={{
-            drawerLabel: '',
-            title: 'Create Profile',
-            swipeEnabled: false,
+            drawerItemStyle: { display: 'none' }
           }}
         />
         <Drawer.Screen
           name="firebase/firebaseConfig" 
           options={{
-            drawerLabel: '',
-            swipeEnabled: false,
+            drawerItemStyle: { display: 'none' }
           }}
         />
         <Drawer.Screen
           name="+not-found" 
           options={{
-            drawerLabel: '',
-            swipeEnabled: false,
+            drawerItemStyle: { display: 'none' }
           }}
         />
       </Drawer>
