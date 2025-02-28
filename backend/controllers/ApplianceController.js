@@ -1,12 +1,13 @@
 const { db } = require('../firebaseAdmin');
 const ApplianceModel = require('../models/ApplianceModel');
 const { v4: uuidv4 } = require('uuid'); // To generate unique IDs
+const verifyLogin = require("./LoginController.js");
 
 const ApplianceController = {
 
     // Create Appliance
     createAppliance: async (req, res) => {
-        const token = res.header.sessionToken;
+        const token = req.get("sessionToken");
         const applianceData = req.body;
         
         const fullData = {
@@ -20,14 +21,13 @@ const ApplianceController = {
             return res.status(400).json({ error: validated.error.message });
         }
 
-        const uid = await verifyLogin(token);
+        const verifiedUser = await verifyLogin(token); // We could def take better advantage of all of this async functionality
 
-        if (uid.rejected) { // Verification failed
-            return res.status(400).json({ message: "Bad session, please log in." });
-        } else if (uid.errorCode) { // Error when verifying, rejects might go here too
-            return res.status(400).json({message: uid.errorCode +": " + uid.message});
+        if (verifiedUser.errorCode) { // If rejected, lots of error codes so this could be expanded to handle more cases
+            return res.status(400).json({code: verifiedUser.errorCode,
+                                        message: verifiedUser.message});
         } else { // Successful case
-            if (fullData.ownerUid != uid) { // Users can only create their own Appliance listings
+            if (fullData.ownerUid != verifiedUser.uid) { // Users can only create their own Appliance listings
                 return res.status(400).json({message: "Cannot create Appliance Listings under another User's name!"});
             }
         };
@@ -49,15 +49,13 @@ const ApplianceController = {
 
     // Get All Appliances
     getAllAppliances: async (req, res) => {
+        const token = req.get("sessionToken");
         try {
-            const token = res.header.sessionToken;
+            const verifiedUser = await verifyLogin(token);
 
-            const uid = await verifyLogin(token);
-
-            if (uid.error) { // Verification failed
-                return res.status(400).json({ message: "Bad session, please log in." });
-            } else if (uid.errorCode) { // Error when verifying, rejects might go here too
-                return res.status(400).json({message: uid.errorCode +": " + uid.message});
+            if (verifiedUser.errorCode) { // If rejected, lots of error codes so this could be expanded to handle more cases
+                return res.status(400).json({code: verifiedUser.errorCode,
+                                            message: verifiedUser.message});
             };
 
             const snapshot = await db.ref('appliances').once('value');
@@ -82,16 +80,15 @@ const ApplianceController = {
     // Get Appliance by Owner
     getApplianceByOwner: async (req, res) => {
         const { ownerUsername } = req.query;
-        const token = req.header.sessionToken
+        const token = req.get("sessionToken");
 
         try {
 
-            const uid = await verifyLogin(token);
+            const verifiedUser = await verifyLogin(token);
 
-            if (uid.rejected) { // Verification failed
-                return res.status(400).json({ message: "Bad session, please log in." });
-            } else if (uid.errorCode) { // Error when verifying, rejects might go here too
-                return res.status(400).json({message: uid.errorCode +": " + uid.message});
+            if (verifiedUser.errorCode) { // If rejected, lots of error codes so this could be expanded to handle more cases
+                return res.status(400).json({code: verifiedUser.errorCode,
+                                            message: verifiedUser.message});
             };
 
             const snapshot = await db.ref('appliances').once('value');
@@ -121,15 +118,14 @@ const ApplianceController = {
     updateAppliance: async (req, res) => {
         const { applianceId } = req.params;
         const updates = req.body;
-        const token = req.header.sessionToken;
+        const token = req.get("sessionToken");
     
         try {
-            const uid = await verifyLogin(token);
+            const verifiedUser = await verifyLogin(token);
 
-            if (uid.rejected) { // Verification failed
-                return res.status(400).json({ message: "Bad session, please log in." });
-            } else if (uid.errorCode) { // Error when verifying, rejects might go here too
-                return res.status(400).json({message: uid.errorCode +": " + uid.message});
+            if (verifiedUser.errorCode) { // If rejected, lots of error codes so this could be expanded to handle more cases
+                return res.status(400).json({code: verifiedUser.errorCode,
+                                            message: verifiedUser.message});
             };
 
             // Make ALL fields optional for update
@@ -155,7 +151,7 @@ const ApplianceController = {
             }
 
             const appliance = snapshot.val();
-            if(appliance.ownerUid != uid) {
+            if(appliance.ownerUid != verifiedUser.uid) {
                 return res.status(400).json({ message: "Can't update someone else's listing!" });
             }
     
@@ -172,15 +168,14 @@ const ApplianceController = {
     // Delete Appliance
     deleteAppliance: async (req, res) => {
         const { applianceId } = req.params;
-        const token = req.header.sessionToken;
+        const token = req.get("sessionToken");
 
         try {
-            const uid = await verifyLogin(token);
+            const verifiedUser = await verifyLogin(token);
 
-            if (uid.rejected) { // Verification failed
-                return res.status(400).json({ message: "Bad session, please log in." });
-            }else if (uid.errorCode) { // Error when verifying, rejects might go here too
-                return res.status(400).json({message: uid.errorCode +": " + uid.message});
+            if (verifiedUser.errorCode) { // If rejected, lots of error codes so this could be expanded to handle more cases
+                return res.status(400).json({code: verifiedUser.errorCode,
+                                            message: verifiedUser.message});
             };
 
             const applianceRef = db.ref(`appliances/${applianceId}`);
@@ -193,7 +188,7 @@ const ApplianceController = {
 
             const appliance = snapshot.val();
 
-            if (appliance.ownerUid != uid) {
+            if (appliance.ownerUid != verifiedUser.uid) {
                 return res.status(400).json({message: "Can't delete someone else's appliance!"});
             }
 

@@ -15,6 +15,6 @@ router.get('/:username', UserController.getUser);
 router.put('/:username', UserController.updateUser);
 
 // Delete a user
-router.delete('/:username', UserController.deleteUser);
+router.delete('/:uid', UserController.deleteUser);
 
 module.exports = router;

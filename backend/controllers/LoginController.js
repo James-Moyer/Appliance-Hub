@@ -4,9 +4,12 @@ async function verifyLogin(token) {
     // Verifies given token using firebase auth
     
     try {
-        await auth.verifyIdToken(token, true).then(result => {
-            return result.uid;
+        // console.log("Searching for " + token);
+        return auth.verifyIdToken(token, true).then(result => {
+            // console.log(result);
+            return result;
         }, error => {
+            // console.log(error);
             return error
         });
     } catch (err) { 
