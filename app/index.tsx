@@ -35,20 +35,25 @@ export default function Login() {
 
   // Handle login submission: authenticate with Firebase and retrieve an ID token
   const handleSubmit = async () => {
+    console.log("Logging in...");
     if (!form.email || !form.password) {
       Alert.alert('Error', 'Please fill in both email and password.');
       return;
     }
     try {
       // Sign in with Firebase Auth using email and password
+      console.log("signing in...");
       const userCredential = await signInWithEmailAndPassword(auth, form.email, form.password);
+      console.log("Fetching token...");
       // Retrieve the ID token (a JWT)
       const idToken = await userCredential.user.getIdToken();
+      console.log("Credential: " + userCredential);
+      console.log("Token: " + idToken);
       setToken(idToken);
       Alert.alert('Login Success', `Logged in as: ${form.email}`);
       
       
-      router.push('/');
+      router.push('/'); // Link to landing page should go here
     } catch (error: any) {
       console.error('Login error:', error);
       Alert.alert('Login Error', error.message);
