@@ -20,10 +20,12 @@ const ApplianceController = {
             return res.status(400).json({ error: validated.error.message });
         }
 
-        const uid = verifyLogin(token);
+        const uid = await verifyLogin(token);
 
-        if (uid.error) { // Verification failed
+        if (uid.rejected) { // Verification failed
             return res.status(400).json({ message: "Bad session, please log in." });
+        } else if (uid.errorCode) { // Error when verifying, rejects might go here too
+            return res.status(400).json({message: uid.errorCode +": " + uid.message});
         } else { // Successful case
             if (fullData.ownerUid != uid) { // Users can only create their own Appliance listings
                 return res.status(400).json({message: "Cannot create Appliance Listings under another User's name!"});
@@ -50,10 +52,12 @@ const ApplianceController = {
         try {
             const token = res.header.sessionToken;
 
-            const uid = verifyLogin(token);
+            const uid = await verifyLogin(token);
 
             if (uid.error) { // Verification failed
                 return res.status(400).json({ message: "Bad session, please log in." });
+            } else if (uid.errorCode) { // Error when verifying, rejects might go here too
+                return res.status(400).json({message: uid.errorCode +": " + uid.message});
             };
 
             const snapshot = await db.ref('appliances').once('value');
@@ -82,10 +86,12 @@ const ApplianceController = {
 
         try {
 
-            const uid = verifyLogin(token);
+            const uid = await verifyLogin(token);
 
-            if (uid.error) { // Verification failed
+            if (uid.rejected) { // Verification failed
                 return res.status(400).json({ message: "Bad session, please log in." });
+            } else if (uid.errorCode) { // Error when verifying, rejects might go here too
+                return res.status(400).json({message: uid.errorCode +": " + uid.message});
             };
 
             const snapshot = await db.ref('appliances').once('value');
@@ -118,10 +124,12 @@ const ApplianceController = {
         const token = req.header.sessionToken;
     
         try {
-            const uid = verifyLogin(token);
+            const uid = await verifyLogin(token);
 
-            if (uid.error) { // Verification failed
+            if (uid.rejected) { // Verification failed
                 return res.status(400).json({ message: "Bad session, please log in." });
+            } else if (uid.errorCode) { // Error when verifying, rejects might go here too
+                return res.status(400).json({message: uid.errorCode +": " + uid.message});
             };
 
             // Make ALL fields optional for update
@@ -167,10 +175,12 @@ const ApplianceController = {
         const token = req.header.sessionToken;
 
         try {
-            const uid = verifyLogin(token);
+            const uid = await verifyLogin(token);
 
-            if (uid.error) { // Verification failed
+            if (uid.rejected) { // Verification failed
                 return res.status(400).json({ message: "Bad session, please log in." });
+            }else if (uid.errorCode) { // Error when verifying, rejects might go here too
+                return res.status(400).json({message: uid.errorCode +": " + uid.message});
             };
 
             const applianceRef = db.ref(`appliances/${applianceId}`);

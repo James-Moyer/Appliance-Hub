@@ -52,10 +52,12 @@ const UserController = {
         const token = req.header.sessionToken;
 
         try {
-            uid = verifyLogin(token);
+            const uid = await verifyLogin(token);
 
-            if (uid.error) { // Verification failed
+            if (uid.rejected) { // Verification failed
                 return res.status(400).json({ message: "Bad session, please log in." }); // These should be updated to be more detailed? Firebase has LOTS of error options!
+            } else if (uid.errorCode) { // Error when verifying, rejects might go here too
+                return res.status(400).json({message: uid.errorCode +": " + uid.message});
             };
 
             const snapshot = await db.ref('users').once('value');
@@ -89,10 +91,12 @@ const UserController = {
         const token = req.header.sessionToken;
         const applyPrivacyPrefs = false;
 
-        uid = verifyLogin(token);
+        const uid = await verifyLogin(token);
 
-        if (uid.error) { // Verification failed
+        if (uid.rejected) { // Verification failed
             return res.status(400).json({ message: "Bad session, please log in." }); // These should be updated to be more detailed? Firebase has LOTS of error options!
+        } else if (uid.errorCode) { // Error when verifying, rejects might go here too
+            return res.status(400).json({message: uid.errorCode +": " + uid.message});
         } else { // Successful case
             if (target != uid) { // Data will be restricted if viewing someone else's data
                 applyPrivacyPrefs = true;
@@ -130,10 +134,12 @@ const UserController = {
         const updates = req.body;
         const token = req.header.sessionToken;
 
-        uid = verifyLogin(token);
+        const uid = await verifyLogin(token);
 
-        if (uid.error) { // Verification failed
+        if (uid.rejected) { // Verification failed
             return res.status(400).json({ message: "Bad session, please log in." });
+        } else if (uid.errorCode) { // Error when verifying, rejects might go here too
+            return res.status(400).json({message: uid.errorCode +": " + uid.message});
         } else { // Successful case
             if (target != uid) { // Users can only send requests to update their own account
                 return res.status(400).json({message: "Cannot update another user's profile!"});
@@ -165,10 +171,12 @@ const UserController = {
         const target = req.params.uid
         const token = req.header.sessionToken;
 
-        uid = verifyLogin(token);
-
-        if (uid.error) { // Verification failed
+        const uid = await verifyLogin(token);
+        
+        if (uid.rejected) { // Verification failed
             return res.status(400).json({ message: "Bad session, please log in." });
+        } else if (uid.errorCode) { // Error when verifying, rejects might go here too
+            return res.status(400).json({message: uid.errorCode +": " + uid.message});
         } else { // Successful case
             if (target != uid) { // Users can only send requests to delete their own account
                 return res.status(400).json({message: "Cannot delete another user's profile!"});
