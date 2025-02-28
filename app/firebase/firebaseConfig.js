@@ -16,16 +16,16 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const database = getDatabase(app);
+// const app = initializeApp(firebaseConfig);
+// const database = getDatabase(app);
 
 // make sure analytics is supported
-let analytics;
-isSupported().then((supported) => {
-  if (supported) {
-    analytics = getAnalytics(app);
-  }
-});
+// let analytics;
+// isSupported().then((supported) => {
+//   if (supported) {
+//     analytics = getAnalytics(app);
+//   }
+// });
 
 export default firebaseConfig;
-export { database, ref, set, get };
+// export { database, ref, set, get };
