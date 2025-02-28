@@ -13,36 +13,41 @@ import { useRouter } from 'expo-router';
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
 
-// Import your Firebase configuration. 
+// Import Firebase configuration – adjust the path if necessary
 import firebaseConfig from './firebase/firebaseConfig.js';
 
-// Initialize Firebase 
+// Initialize Firebase and Auth (ensure this is done only once in your app)
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
 export default function Login() {
   const router = useRouter();
+
+  // Form state for login (email & password)
   const [form, setForm] = useState({ email: '', password: '' });
-  // store the token in state 
+  // State to store the token after login (if needed later)
   const [token, setToken] = useState('');
 
+  // Update form fields
   const handleChange = (key: keyof typeof form, value: string) => {
     setForm({ ...form, [key]: value });
   };
 
-  const handleLogin = async () => {
+  // Handle login submission: authenticate with Firebase and retrieve an ID token
+  const handleSubmit = async () => {
     if (!form.email || !form.password) {
       Alert.alert('Error', 'Please fill in both email and password.');
       return;
     }
     try {
-      // Sign in using Firebase Auth
+      // Sign in with Firebase Auth using email and password
       const userCredential = await signInWithEmailAndPassword(auth, form.email, form.password);
+      // Retrieve the ID token (a JWT)
       const idToken = await userCredential.user.getIdToken();
       setToken(idToken);
-      Alert.alert('Login Success', `Logged in as: ${form.email}\nToken: ${idToken.substring(0,20)}...`);
-
-      // For now, simply navigate to home
+      Alert.alert('Login Success', `Logged in as: ${form.email}`);
+      
+      
       router.push('/');
     } catch (error: any) {
       console.error('Login error:', error);
@@ -74,7 +79,7 @@ export default function Login() {
           secureTextEntry
         />
 
-        <TouchableOpacity style={styles.button} onPress={handleLogin}>
+        <TouchableOpacity style={styles.button} onPress={handleSubmit}>
           <Text style={styles.buttonText}>Sign In</Text>
         </TouchableOpacity>
 
@@ -92,23 +97,21 @@ export default function Login() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
-    padding: 20,
-    justifyContent: 'center',
     alignItems: 'center',
+    padding: 20,
+    backgroundColor: '#f8f9fa',
   },
   title: {
     fontSize: 24,
-    marginBottom: 24,
     fontWeight: 'bold',
-    textAlign: 'center',
+    marginBottom: 20,
   },
   input: {
+    width: '100%',
+    padding: 10,
+    marginBottom: 10,
     borderWidth: 1,
     borderColor: '#ccc',
-    padding: 10,
-    width: '100%',
-    marginBottom: 12,
     borderRadius: 5,
     backgroundColor: '#fff',
   },
@@ -116,8 +119,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#007bff',
     padding: 12,
     borderRadius: 5,
-    alignItems: 'center',
     width: '100%',
+    alignItems: 'center',
     marginBottom: 10,
   },
   buttonText: {
