@@ -1,10 +1,9 @@
-// App.tsx or screens/HomeScreen.tsx
 import React, { useState } from 'react';
 import { SafeAreaView, StyleSheet, Text, TextInput, View, Button, Modal } from 'react-native';
 import { requests as initialRequests } from '../types/data'; // Assume this is your initial data
 import RequestList from '../components/RequestList';
-import { Request } from '../types/types'; // Import Request type
-import { Picker } from '@react-native-picker/picker';
+import { Request } from '../types/types';
+import DropDownPicker from 'react-native-dropdown-picker';
 
 export default function App() {
     // State to hold the filter text and requests
@@ -13,6 +12,7 @@ export default function App() {
 
     // State for modal visibility and form data
     const [modalVisible, setModalVisible] = useState(false);
+    const [dropdownOpen, setDropdownOpen] = useState(false); // State for dropdown open
     const [newRequest, setNewRequest] = useState<Request>({
         id: String(requests.length + 1),
         requesterUsername: '',
@@ -22,6 +22,14 @@ export default function App() {
         collateral: false,
         requestDuration: 60,
     });
+
+    const [items, setItems] = useState([
+        { label: 'Open', value: 'Open' },
+        { label: 'Fulfilled', value: 'Fulfilled' },
+        { label: 'Closed', value: 'Closed' }
+    ]);
+
+    const [value, setValue] = useState(null);
 
     // Filtered data based on user input
     const filteredRequests = requests.filter((request) =>
@@ -57,8 +65,9 @@ export default function App() {
             <TextInput
                 style={styles.searchBar}
                 placeholder="Search for requester, appliance, status, or date..."
+                placeholderTextColor="#555"
                 value={filter}
-                onChangeText={setFilter} // Update filter as user types
+                onChangeText={setFilter}
             />
 
             {/* Request List */}
@@ -79,30 +88,40 @@ export default function App() {
                     <TextInput
                         style={styles.input}
                         placeholder="Requester Username"
+                        placeholderTextColor="#555"
                         value={newRequest.requesterUsername}
                         onChangeText={(text) => setNewRequest({ ...newRequest, requesterUsername: text })}
                     />
                     <TextInput
                         style={styles.input}
                         placeholder="Appliance"
+                        placeholderTextColor="#555"
                         value={newRequest.appliance}
                         onChangeText={(text) => setNewRequest({ ...newRequest, appliance: text })}
                     />
 
-                    {/* Status Picker */}
-                    <Picker
-                        selectedValue={newRequest.status}
-                        style={styles.input}
-                        onValueChange={(itemValue) => setNewRequest({ ...newRequest, status: itemValue as 'Open' | 'Fulfilled' | 'Closed' })}
-                    >
-                        <Picker.Item label="Open" value="Open" />
-                        <Picker.Item label="Fulfilled" value="Fulfilled" />
-                        <Picker.Item label="Closed" value="Closed" />
-                    </Picker>
+                    {/* Status Dropdown */}
+                    <DropDownPicker
+                        items={items}
+                        placeholder="Select Status"
+                        value={value}
+                        open={dropdownOpen}
+                        setOpen={setDropdownOpen}
+                        setValue={setValue}
+                        onChangeValue={(value) => {
+                            if (value) {
+                                setNewRequest({ ...newRequest, status: value as 'Open' | 'Fulfilled' | 'Closed' });
+                            }
+                        }}
+                        containerStyle={styles.pickerContainer}
+                        style={styles.picker}
+                        textStyle={styles.pickerText}
+                    />
 
                     <TextInput
                         style={styles.input}
                         placeholder="Created Date"
+                        placeholderTextColor="#555"
                         value={newRequest.created}
                         onChangeText={(text) => setNewRequest({ ...newRequest, created: text })}
                     />
@@ -161,5 +180,17 @@ const styles = StyleSheet.create({
         borderRadius: 5,
         marginBottom: 10,
         paddingLeft: 10,
+    },
+    pickerContainer: {
+        width: '90%',
+        marginBottom: 10,
+    },
+    picker: {
+        borderColor: '#ccc',
+        borderWidth: 1,
+        borderRadius: 5,
+    },
+    pickerText: {
+        color: '#555',
     },
 });
