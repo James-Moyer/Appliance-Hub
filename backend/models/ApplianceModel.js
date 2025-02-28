@@ -2,7 +2,7 @@ const Joi = require("joi");
 
 class ApplianceModel {
     static schema = Joi.object({
-        ownerUsername: Joi.string().max(24).required(),
+        ownerUid: Joi.string().guid().required(),
         name: Joi.string().max(64).required(),
         description: Joi.string().required(),
         timeAvailable: Joi.date().timestamp(),

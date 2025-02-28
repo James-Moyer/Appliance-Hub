@@ -64,9 +64,9 @@ const UserController = {
                 return res.status(204).json({ message: 'No users found' });
             }
 
-            users = snapshot.val();
+            let users = snapshot.val();
 
-            for (user in users) { // Automatically apply privacy prefs for every user
+            for (const user in users) { // Automatically apply privacy prefs for every user
                 if (!user.showDorm) {
                     delete user.location;
                 }
