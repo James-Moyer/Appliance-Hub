@@ -1,5 +1,6 @@
 const { db, auth } = require('../firebaseAdmin');
 const UserModel = require('../models/UserModel.js');
+const verifyLogin = require("./LoginController.js");
 
 const UserController = {
 
@@ -20,6 +21,8 @@ const UserController = {
         if (!password) {
             return res.status(400).json({ message: 'Password not entered!' });
         }
+
+        // Verify request came from a legit source?
 
         try {
             // create user in firebase auth
@@ -46,13 +49,35 @@ const UserController = {
     },
     
     getAllUsers: async (req, res) => {
+        const token = req.header.sessionToken;
+
         try {
+            const uid = await verifyLogin(token);
+
+            if (uid.rejected) { // Verification failed
+                return res.status(400).json({ message: "Bad session, please log in." }); // These should be updated to be more detailed? Firebase has LOTS of error options!
+            } else if (uid.errorCode) { // Error when verifying, rejects might go here too
+                return res.status(400).json({message: uid.errorCode +": " + uid.message});
+            };
+
             const snapshot = await db.ref('users').once('value');
 
             if (!snapshot.exists()) {
                 return res.status(204).json({ message: 'No users found' });
             }
-            res.status(200).json(snapshot.val());
+
+            let users = snapshot.val();
+
+            for (const user in users) { // Automatically apply privacy prefs for every user
+                if (!user.showDorm) {
+                    delete user.location;
+                }
+                if (!user.showFloor) {
+                    delete user.floor;
+                }
+            }
+
+            res.status(200).json(users);
         } catch (err) {
             res.status(500).json({ message: err.message });
         }
@@ -60,19 +85,42 @@ const UserController = {
 
     getUser: async (req, res) => {
         /*
-        Expects req body to contain json object w/ username field
+        Expects req body to contain json object w/ uid field
         */
-        const username = req.params.username;
+        const target = req.params.uid;
+        const token = req.header.sessionToken;
+        const applyPrivacyPrefs = false;
+
+        const uid = await verifyLogin(token);
+
+        if (uid.rejected) { // Verification failed
+            return res.status(400).json({ message: "Bad session, please log in." }); // These should be updated to be more detailed? Firebase has LOTS of error options!
+        } else if (uid.errorCode) { // Error when verifying, rejects might go here too
+            return res.status(400).json({message: uid.errorCode +": " + uid.message});
+        } else { // Successful case
+            if (target != uid) { // Data will be restricted if viewing someone else's data
+                applyPrivacyPrefs = true;
+            }
+        };
 
         try {
             const ref = db.ref('users/' + username);
-            const snapshot = await ref.once('value');
+            const snapshot = await ref.once('value'); // Filter this based on requesting user
 
             if (!snapshot.exists()) {
                 return res.status(404).json({ message: 'No user found with specified username' });
             }
 
             const user = snapshot.val();
+
+            if (applyPrivacyPrefs) { // Applying privacy settings
+                if (!user.showDorm) {
+                    delete user.location;
+                }
+                if (!user.showFloor) {
+                    delete user.floor;
+                }
+            }
 
             res.status(200).json(user);
 
@@ -82,9 +130,21 @@ const UserController = {
     },
     
     updateUser: async (req, res) => {
-        const username = req.params.username;
+        const target = req.params.uid;
         const updates = req.body;
+        const token = req.header.sessionToken;
 
+        const uid = await verifyLogin(token);
+
+        if (uid.rejected) { // Verification failed
+            return res.status(400).json({ message: "Bad session, please log in." });
+        } else if (uid.errorCode) { // Error when verifying, rejects might go here too
+            return res.status(400).json({message: uid.errorCode +": " + uid.message});
+        } else { // Successful case
+            if (target != uid) { // Users can only send requests to update their own account
+                return res.status(400).json({message: "Cannot update another user's profile!"});
+            }
+        };
 
         try {
             const valobj = UserModel.updateValidate(updates);
@@ -92,7 +152,7 @@ const UserController = {
                 return res.status(400).json({ message: valobj.error.message });
             }
 
-            const ref = db.ref('users/' + username);
+            const ref = db.ref('users/' + target);
 
             const snapshot = await ref.once('value');
             if(!snapshot.exists()) {
@@ -108,23 +168,31 @@ const UserController = {
     },
 
     deleteUser: async (req, res) => {
-        const username = req.params.username;
+        const target = req.params.uid
+        const token = req.header.sessionToken;
+
+        const uid = await verifyLogin(token);
+        
+        if (uid.rejected) { // Verification failed
+            return res.status(400).json({ message: "Bad session, please log in." });
+        } else if (uid.errorCode) { // Error when verifying, rejects might go here too
+            return res.status(400).json({message: uid.errorCode +": " + uid.message});
+        } else { // Successful case
+            if (target != uid) { // Users can only send requests to delete their own account
+                return res.status(400).json({message: "Cannot delete another user's profile!"});
+            }
+        };
 
         try {
-            // Get user UID from Realtime Database
-            const ref = db.ref('users/' + username);
+            const ref = db.ref('users/' + target);
             const snapshot = await ref.once('value');
 
             if (!snapshot.exists()) {
-                return res.status(404).json({ message: 'No user found with specified username' });
+                return res.status(404).json({ message: 'No user found with specified uid' }); // This should never happen!
             }
-
-            const { uid } = snapshot.val();
 
             // Delete from Firebase Auth
-            if (uid) {
-                await auth.deleteUser(uid);
-            }
+            await auth.deleteUser(uid);
 
             // Delete from Realtime Database
             await ref.remove();

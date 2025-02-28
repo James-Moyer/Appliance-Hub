@@ -6,7 +6,7 @@ const ApplianceController = {
 
     // Create Appliance
     createAppliance: async (req, res) => {
-        
+        const token = res.header.sessionToken;
         const applianceData = req.body;
         
         const fullData = {
@@ -19,6 +19,18 @@ const ApplianceController = {
         if (validated.error) {
             return res.status(400).json({ error: validated.error.message });
         }
+
+        const uid = await verifyLogin(token);
+
+        if (uid.rejected) { // Verification failed
+            return res.status(400).json({ message: "Bad session, please log in." });
+        } else if (uid.errorCode) { // Error when verifying, rejects might go here too
+            return res.status(400).json({message: uid.errorCode +": " + uid.message});
+        } else { // Successful case
+            if (fullData.ownerUid != uid) { // Users can only create their own Appliance listings
+                return res.status(400).json({message: "Cannot create Appliance Listings under another User's name!"});
+            }
+        };
 
         try {
             const applianceId = uuidv4(); // Generate unique ID
@@ -38,13 +50,30 @@ const ApplianceController = {
     // Get All Appliances
     getAllAppliances: async (req, res) => {
         try {
+            const token = res.header.sessionToken;
+
+            const uid = await verifyLogin(token);
+
+            if (uid.error) { // Verification failed
+                return res.status(400).json({ message: "Bad session, please log in." });
+            } else if (uid.errorCode) { // Error when verifying, rejects might go here too
+                return res.status(400).json({message: uid.errorCode +": " + uid.message});
+            };
+
             const snapshot = await db.ref('appliances').once('value');
 
             if (!snapshot.exists()) {
                 return res.status(404).json({ message: 'No appliances found' });
             }
 
-            res.status(200).json(snapshot.val());
+            const listings = snapshot.val();
+            for (const listing in listings) { // Removing private listings
+                if (!listings[listing].isVisible) {
+                    delete listing;
+                }
+            }
+
+            res.status(200).json(listings);
         } catch (err) {
             res.status(500).json({ error: err.message });
         }
@@ -53,8 +82,18 @@ const ApplianceController = {
     // Get Appliance by Owner
     getApplianceByOwner: async (req, res) => {
         const { ownerUsername } = req.query;
+        const token = req.header.sessionToken
 
         try {
+
+            const uid = await verifyLogin(token);
+
+            if (uid.rejected) { // Verification failed
+                return res.status(400).json({ message: "Bad session, please log in." });
+            } else if (uid.errorCode) { // Error when verifying, rejects might go here too
+                return res.status(400).json({message: uid.errorCode +": " + uid.message});
+            };
+
             const snapshot = await db.ref('appliances').once('value');
 
             if (!snapshot.exists()) {
@@ -68,6 +107,10 @@ const ApplianceController = {
                 return res.status(404).json({ message: 'No appliances found for this user' });
             }
 
+            if (!filtered.isVisible) { // Making sure if it's public, not sure if it's possible to just join multiple filters on the query instead
+                return res.status(404).json({ message: 'No appliances found for this user' });
+            }
+
             res.status(200).json(filtered);
         } catch (error) {
             res.status(500).json({ error: error.message });
@@ -78,8 +121,17 @@ const ApplianceController = {
     updateAppliance: async (req, res) => {
         const { applianceId } = req.params;
         const updates = req.body;
+        const token = req.header.sessionToken;
     
         try {
+            const uid = await verifyLogin(token);
+
+            if (uid.rejected) { // Verification failed
+                return res.status(400).json({ message: "Bad session, please log in." });
+            } else if (uid.errorCode) { // Error when verifying, rejects might go here too
+                return res.status(400).json({message: uid.errorCode +": " + uid.message});
+            };
+
             // Make ALL fields optional for update
             const allFields = Object.keys(ApplianceModel.schema.describe().keys);
         
@@ -95,6 +147,17 @@ const ApplianceController = {
     
             // Reference to the specific appliance in the database
             const applianceRef = db.ref(`appliances/${applianceId}`);
+
+            const snapshot = await applianceRef.once('value');
+
+            if(!snapshot.exists()) {
+                return res.status(404).json({ message: "Could not find requested appliance to update!" });
+            }
+
+            const appliance = snapshot.val();
+            if(appliance.ownerUid != uid) {
+                return res.status(400).json({ message: "Can't update someone else's listing!" });
+            }
     
             // Apply the partial updates
             await applianceRef.update(updates);
@@ -109,9 +172,31 @@ const ApplianceController = {
     // Delete Appliance
     deleteAppliance: async (req, res) => {
         const { applianceId } = req.params;
+        const token = req.header.sessionToken;
 
         try {
+            const uid = await verifyLogin(token);
+
+            if (uid.rejected) { // Verification failed
+                return res.status(400).json({ message: "Bad session, please log in." });
+            }else if (uid.errorCode) { // Error when verifying, rejects might go here too
+                return res.status(400).json({message: uid.errorCode +": " + uid.message});
+            };
+
             const applianceRef = db.ref(`appliances/${applianceId}`);
+
+            const snapshot = await applianceRef.once('value');
+
+            if (!snapshot.exists()) {
+                return res.status(404).json({message: "Could not find specified appliance"});
+            }
+
+            const appliance = snapshot.val();
+
+            if (appliance.ownerUid != uid) {
+                return res.status(400).json({message: "Can't delete someone else's appliance!"});
+            }
+
             await applianceRef.remove();
 
             res.status(200).json({ message: 'Appliance deleted successfully' });
