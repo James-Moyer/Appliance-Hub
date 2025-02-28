@@ -28,7 +28,7 @@ const UserController = {
             // create user in firebase auth
             const userRecord = await auth.createUser({
                 email: userinfo.email,
-                password: userinfo.password,
+                password: password,
                 displayName: userinfo.username,
             });
 
@@ -42,22 +42,20 @@ const UserController = {
             // save info in db
             await db.ref('users/' + userRecord.uid).set(userToSave);
 
-            res.status(201).json({ message: 'User created successfully', uid: userRecord.uid });
+            res.status(201).json({ message: 'User created successfully', uid: userRecord.uid});
         } catch(err) {
             res.status(500).json({ message: err.message });
         }
     },
     
     getAllUsers: async (req, res) => {
-        const token = req.header.sessionToken;
-
+        const token = req.get("sessionToken");
         try {
-            const uid = await verifyLogin(token);
-
-            if (uid.rejected) { // Verification failed
-                return res.status(400).json({ message: "Bad session, please log in." }); // These should be updated to be more detailed? Firebase has LOTS of error options!
-            } else if (uid.errorCode) { // Error when verifying, rejects might go here too
-                return res.status(400).json({message: uid.errorCode +": " + uid.message});
+            const verifiedUser = await verifyLogin(token);
+            // console.log(uid);
+            if (verifiedUser.errorCode) { // If rejected, lots of error codes so this could be expanded to handle more cases
+                return res.status(400).json({code: verifiedUser.errorCode,
+                                            message: verifiedUser.message});
             };
 
             const snapshot = await db.ref('users').once('value');
@@ -85,20 +83,19 @@ const UserController = {
 
     getUser: async (req, res) => {
         /*
-        Expects req body to contain json object w/ uid field
+        Expects req body to contain json object w/ uid field and headr to have sessionToken field
         */
         const target = req.params.uid;
-        const token = req.header.sessionToken;
+        const token = req.get("sessionToken");
         const applyPrivacyPrefs = false;
 
-        const uid = await verifyLogin(token);
+        const verifiedUser = await verifyLogin(token);
 
-        if (uid.rejected) { // Verification failed
-            return res.status(400).json({ message: "Bad session, please log in." }); // These should be updated to be more detailed? Firebase has LOTS of error options!
-        } else if (uid.errorCode) { // Error when verifying, rejects might go here too
-            return res.status(400).json({message: uid.errorCode +": " + uid.message});
+        if (verifiedUser.errorCode) { // If rejected, lots of error codes so this could be expanded to handle more cases
+            return res.status(400).json({code: verifiedUser.errorCode,
+                                        message: verifiedUser.message});
         } else { // Successful case
-            if (target != uid) { // Data will be restricted if viewing someone else's data
+            if (target != verifiedUser.uid) { // Data will be restricted if viewing someone else's data
                 applyPrivacyPrefs = true;
             }
         };
@@ -132,16 +129,15 @@ const UserController = {
     updateUser: async (req, res) => {
         const target = req.params.uid;
         const updates = req.body;
-        const token = req.header.sessionToken;
+        const token = req.get("sessionToken");
 
-        const uid = await verifyLogin(token);
+        const verifiedUser = await verifyLogin(token);
 
-        if (uid.rejected) { // Verification failed
-            return res.status(400).json({ message: "Bad session, please log in." });
-        } else if (uid.errorCode) { // Error when verifying, rejects might go here too
-            return res.status(400).json({message: uid.errorCode +": " + uid.message});
+        if (verifiedUser.errorCode) { // If rejected, lots of error codes so this could be expanded to handle more cases
+            return res.status(400).json({code: verifiedUser.errorCode,
+                                        message: verifiedUser.message});
         } else { // Successful case
-            if (target != uid) { // Users can only send requests to update their own account
+            if (target != verifiedUser.uid) { // Users can only send requests to update their own account
                 return res.status(400).json({message: "Cannot update another user's profile!"});
             }
         };
@@ -169,16 +165,15 @@ const UserController = {
 
     deleteUser: async (req, res) => {
         const target = req.params.uid
-        const token = req.header.sessionToken;
+        const token = req.get("sessionToken");
 
-        const uid = await verifyLogin(token);
+        const verifiedUser = await verifyLogin(token);
         
-        if (uid.rejected) { // Verification failed
-            return res.status(400).json({ message: "Bad session, please log in." });
-        } else if (uid.errorCode) { // Error when verifying, rejects might go here too
-            return res.status(400).json({message: uid.errorCode +": " + uid.message});
+        if (verifiedUser.errorCode) { // If rejected, lots of error codes so this could be expanded to handle more cases
+            return res.status(400).json({code: verifiedUser.errorCode,
+                                        message: verifiedUser.message});
         } else { // Successful case
-            if (target != uid) { // Users can only send requests to delete their own account
+            if (target != verifiedUser.uid) { // Users can only send requests to delete their own account
                 return res.status(400).json({message: "Cannot delete another user's profile!"});
             }
         };
@@ -192,7 +187,7 @@ const UserController = {
             }
 
             // Delete from Firebase Auth
-            await auth.deleteUser(uid);
+            await auth.deleteUser(target);
 
             // Delete from Realtime Database
             await ref.remove();

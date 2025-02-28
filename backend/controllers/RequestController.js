@@ -1,10 +1,12 @@
 const { db } = require('../firebaseAdmin');
 const RequestModel = require('../models/RequestModel');
 const { v4: uuidv4 } = require('uuid'); // generate unique request ids
+const verifyLogin = require("./LoginController.js");
 
 const RequestController = {
     // create request
     createRequest: async (req, res) => {
+        const token = req.get("sessionToken");
         const requestData = req.body;
 
         // Generate full request data
@@ -20,6 +22,18 @@ const RequestController = {
         }
 
         try {
+
+            const verifiedUser = await verifyLogin(token); // We could def take better advantage of all of this async functionality
+
+            if (verifiedUser.errorCode) { // If rejected, lots of error codes so this could be expanded to handle more cases
+                return res.status(400).json({code: verifiedUser.errorCode,
+                                            message: verifiedUser.message});
+            } else { // Successful case
+                if (fullData.requesterEmail != verifiedUser.email) { // Users can only create their own requests
+                    return res.status(400).json({message: "Cannot create Appliance Request under another User's name!"});
+                }
+            };
+
             // Store full request data in Firebase
             const requestId = uuidv4(); // Generate unique ID
 
@@ -37,7 +51,16 @@ const RequestController = {
 
     // get all requests
     getAllRequests: async (req, res) => {
+        const token = req.get("sessionToken");
         try {
+
+            const verifiedUser = await verifyLogin(token); // We could def take better advantage of all of this async functionality
+
+            if (verifiedUser.errorCode) { // If rejected, lots of error codes so this could be expanded to handle more cases
+                return res.status(400).json({code: verifiedUser.errorCode,
+                                            message: verifiedUser.message});
+            };
+
             const snapshot = await db.ref('requests').once('value');
 
             if (!snapshot.exists()) {
@@ -53,6 +76,14 @@ const RequestController = {
     // get requests by filter
     getRequestByFilter: async (req, res) => {
         const { applianceName, collateral, requestDuration } = req.query; // filters from query parameters
+        const token = req.get("sessionToken");
+
+        const verifiedUser = await verifyLogin(token); // We could def take better advantage of all of this async functionality
+
+        if (verifiedUser.errorCode) { // If rejected, lots of error codes so this could be expanded to handle more cases
+            return res.status(400).json({code: verifiedUser.errorCode,
+                                        message: verifiedUser.message});
+        };
 
         try {
             const requestsRef = db.ref('requests');
@@ -92,6 +123,14 @@ const RequestController = {
     updateRequestStatus: async (req, res) => {
         const { requestId } = req.params;
         const { status } = req.body;
+        const token = req.get("sessionToken");
+
+        const verifiedUser = await verifyLogin(token); // We could def take better advantage of all of this async functionality
+
+        if (verifiedUser.errorCode) { // If rejected, lots of error codes so this could be expanded to handle more cases
+            return res.status(400).json({code: verifiedUser.errorCode,
+                                        message: verifiedUser.message});
+        };
     
         // validate status input
         if (!["open", "fulfilled", "closed"].includes(status)) {
@@ -105,6 +144,11 @@ const RequestController = {
             if (!snapshot.exists()) {
                 return res.status(404).json({ message: 'Request not found' });
             }
+
+            const request = snapshot.val();
+            if (request.requesterEmail != verifiedUser.email) {
+                return res.status(400).json({message: "Cannot update another user's request!"});
+            }
     
             await requestRef.update({ status });
     
@@ -117,6 +161,14 @@ const RequestController = {
     // delete request
     deleteRequest: async (req, res) => {
         const { requestId } = req.params;
+        const token = req.get("sessionToken");
+
+        const verifiedUser = await verifyLogin(token); // We could def take better advantage of all of this async functionality
+
+        if (verifiedUser.errorCode) { // If rejected, lots of error codes so this could be expanded to handle more cases
+            return res.status(400).json({code: verifiedUser.errorCode,
+                                        message: verifiedUser.message});
+        };
 
         try {
             const requestRef = db.ref(`requests/${requestId}`);
@@ -124,6 +176,12 @@ const RequestController = {
 
             if (!snapshot.exists()) {
                 return res.status(404).json({ message: 'Request not found' });
+            }
+
+
+            const request = snapshot.val();
+            if (request.requesterEmail != verifiedUser.email) {
+                return res.status(400).json({message: "Cannot delete another user's request!"});
             }
 
             await requestRef.remove();
