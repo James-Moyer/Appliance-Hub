@@ -1,41 +1,63 @@
 import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  TextInput, 
-  TouchableOpacity, 
-  StyleSheet, 
-  Alert, 
-  Keyboard, 
-  TouchableWithoutFeedback 
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+  Keyboard,
+  TouchableWithoutFeedback
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { initializeApp } from 'firebase/app';
+import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
+
+// Import Firebase configuration – adjust the path if necessary
+import firebaseConfig from './firebase/firebaseConfig.js';
+
+// Initialize Firebase and Auth (ensure this is done only once in your app)
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
 
 export default function Login() {
   const router = useRouter();
 
-  // Form state for login (email and password)
-  const [form, setForm] = useState({
-    email: '',
-    password: '',
-  });
+  // Form state for login (email & password)
+  const [form, setForm] = useState({ email: '', password: '' });
+  // State to store the token after login (if needed later)
+  const [token, setToken] = useState('');
 
-  // Handle input change
+  // Update form fields
   const handleChange = (key: keyof typeof form, value: string) => {
     setForm({ ...form, [key]: value });
   };
 
-  // Form validation & submission
-  const handleSubmit = () => {
+  // Handle login submission: authenticate with Firebase and retrieve an ID token
+  const handleSubmit = async () => {
+    console.log("Logging in...");
     if (!form.email || !form.password) {
       Alert.alert('Error', 'Please fill in both email and password.');
       return;
     }
-    console.log('Login form submitted:', form);
-    // TODO: Insert actual login logic here (e.g., Firebase signInWithEmailAndPassword)
-    
-    // Redirect to home page after submission
-    router.push('/');
+    try {
+      // Sign in with Firebase Auth using email and password
+      console.log("signing in...");
+      const userCredential = await signInWithEmailAndPassword(auth, form.email, form.password);
+      console.log("Fetching token...");
+      // Retrieve the ID token (a JWT)
+      const idToken = await userCredential.user.getIdToken();
+      console.log("Credential: " + userCredential);
+      console.log("Token: " + idToken);
+      setToken(idToken);
+      Alert.alert('Login Success', `Logged in as: ${form.email}`);
+      
+      
+      router.push('/'); // Link to landing page should go here
+    } catch (error: any) {
+      console.error('Login error:', error);
+      Alert.alert('Login Error', error.message);
+    }
   };
 
   return (
@@ -52,6 +74,7 @@ export default function Login() {
           keyboardType="email-address"
           autoCapitalize="none"
         />
+
         <TextInput
           style={styles.input}
           placeholder="Password"
@@ -65,8 +88,8 @@ export default function Login() {
           <Text style={styles.buttonText}>Sign In</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity 
-          style={[styles.button, styles.createProfileButton]} 
+        <TouchableOpacity
+          style={[styles.button, styles.createProfileButton]}
           onPress={() => router.push('/create_profile')}
         >
           <Text style={styles.buttonText}>Create Profile</Text>
@@ -103,6 +126,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     width: '100%',
     alignItems: 'center',
+    marginBottom: 10,
   },
   buttonText: {
     color: '#fff',
