@@ -1,9 +1,7 @@
 export type Request = {
-    id: string;
-    requesterUsername: string;
-    appliance: string;
+    requesterEmail: string;
+    applianceName: string;
     collateral: boolean;
     requestDuration: Number;
-    status: 'Open' | 'Fulfilled' | 'Closed';
-    created: string;
+    status: 'open' | 'fulfilled' | 'closed';
 };

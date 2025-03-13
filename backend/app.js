@@ -13,10 +13,10 @@ app.use('/user', profileRoute);
 app.use('/appliance', applianceRoute);
 app.use('/request', requestRoute);
 
-app.use((req, res, next) => {
-    res.status(200).json({
-        message: "hi"
-    });
-});
+// app.use((req, res, next) => {
+//     res.status(200).json({
+//         message: "hi"
+//     });
+// });
 
 module.exports = app;

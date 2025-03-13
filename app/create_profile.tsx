@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Keyboard, TouchableWithoutFeedback } from 'react-native';
-import { useRouter, Link } from 'expo-router';
+import { useRouter } from 'expo-router';
 
 export default function CreateProfile() {
   const router = useRouter();
@@ -35,12 +35,12 @@ export default function CreateProfile() {
         body: JSON.stringify(form),
       });
 
+      const data = await response.json();
       if (response.ok) {
-        Alert.alert('Success', 'Profile created successfully.');
+        Alert.alert('Success', data.message);
         // Redirect to home page after submitting
         router.push('/');
       } else {
-        const data = await response.json();
         Alert.alert('Error', data.message);
         return;
       }

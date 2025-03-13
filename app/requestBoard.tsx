@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
-import { SafeAreaView, StyleSheet, Text, TextInput, View, Button, Modal } from 'react-native';
+import { SafeAreaView, StyleSheet, Text, TextInput, View, Button, Modal, Alert } from 'react-native';
 import { requests as initialRequests } from '../types/data'; // Assume this is your initial data
 import RequestList from '../components/RequestList';
 import { Request } from '../types/types';
 import DropDownPicker from 'react-native-dropdown-picker';
+import { useRouter } from 'expo-router';
+
 
 export default function App() {
+    const router = useRouter();
+
     // State to hold the filter text and requests
     const [filter, setFilter] = useState('');
     const [requests, setRequests] = useState<Request[]>(initialRequests);
@@ -14,44 +18,62 @@ export default function App() {
     const [modalVisible, setModalVisible] = useState(false);
     const [dropdownOpen, setDropdownOpen] = useState(false); // State for dropdown open
     const [newRequest, setNewRequest] = useState<Request>({
-        id: String(requests.length + 1),
-        requesterUsername: '',
-        appliance: '',
-        status: 'Open', // Reset status to 'Open'
-        created: new Date().toISOString(),
+        requesterEmail: '',
+        applianceName: '',
+        status: 'open', // Reset status to 'Open'
         collateral: false,
         requestDuration: 60,
     });
 
     const [items, setItems] = useState([
-        { label: 'Open', value: 'Open' },
-        { label: 'Fulfilled', value: 'Fulfilled' },
-        { label: 'Closed', value: 'Closed' }
+        { label: 'Open', value: 'open' },
+        { label: 'Fulfilled', value: 'fulfilled' },
+        { label: 'Closed', value: 'closed' }
     ]);
 
     const [value, setValue] = useState(null);
 
     // Filtered data based on user input
     const filteredRequests = requests.filter((request) =>
-        request.requesterUsername.toLowerCase().includes(filter.toLowerCase()) ||
-        request.appliance.toLowerCase().includes(filter.toLowerCase()) ||
-        request.status.toLowerCase().includes(filter.toLowerCase()) ||
-        request.created.toLowerCase().includes(filter.toLowerCase())
+        // request.applianceName.toLowerCase().includes(filter.toLowerCase()) ||
+        request.status.toLowerCase().includes(filter.toLowerCase())
     );
 
     // Handler to submit new request
-    const handleCreateRequest = () => {
-        setRequests([...requests, newRequest]); // Add the new request to the list
+    const handleCreateRequest = async () => {
+        const token = "NONE"; // TODO - where do we get the token from?
         setModalVisible(false); // Close the modal
-        setNewRequest({
-            id: String(requests.length + 1),
-            requesterUsername: '',
-            appliance: '',
-            status: 'Open', // Reset status to 'Open'
-            created: new Date().toISOString(),
-            collateral: false,
-            requestDuration: 60,
-        }); // Reset form data
+        try {
+            const response = await fetch('http://localhost:3000/request', { // If running on an emulator, use 'http://{ip_address}:3000/request'
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'sessionToken': token
+                },
+                body: JSON.stringify(newRequest),
+            });
+    
+            if (response.ok) {
+                Alert.alert('Success', 'Request created successfully.');
+                setNewRequest({
+                    requesterEmail: '',
+                    applianceName: '',
+                    status: 'open', // Reset status to 'Open'
+                    collateral: false,
+                    requestDuration: 60,
+                }); // Reset form data
+                setRequests([...requests, newRequest]); // Add the new request to the list
+            } else {
+                const data = await response.json();
+                Alert.alert('Error', data.message);
+                return;
+            }
+    
+        } catch (error) {
+            Alert.alert('Error', 'An error occurred. Please try again.');
+            console.error(error);
+        }
+
     };
 
     return (
@@ -84,20 +106,12 @@ export default function App() {
                 <View style={styles.modalContainer}>
                     <Text style={styles.modalTitle}>Create a New Request</Text>
 
-                    {/* Input Fields for the new request */}
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Requester Username"
-                        placeholderTextColor="#555"
-                        value={newRequest.requesterUsername}
-                        onChangeText={(text) => setNewRequest({ ...newRequest, requesterUsername: text })}
-                    />
                     <TextInput
                         style={styles.input}
                         placeholder="Appliance"
                         placeholderTextColor="#555"
-                        value={newRequest.appliance}
-                        onChangeText={(text) => setNewRequest({ ...newRequest, appliance: text })}
+                        value={newRequest.applianceName}
+                        onChangeText={(text) => setNewRequest({ ...newRequest, applianceName: text })}
                     />
 
                     {/* Status Dropdown */}
@@ -110,20 +124,12 @@ export default function App() {
                         setValue={setValue}
                         onChangeValue={(value) => {
                             if (value) {
-                                setNewRequest({ ...newRequest, status: value as 'Open' | 'Fulfilled' | 'Closed' });
+                                setNewRequest({ ...newRequest, status: value as 'open' | 'fulfilled' | 'closed' });
                             }
                         }}
                         containerStyle={styles.pickerContainer}
                         style={styles.picker}
                         textStyle={styles.pickerText}
-                    />
-
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Created Date"
-                        placeholderTextColor="#555"
-                        value={newRequest.created}
-                        onChangeText={(text) => setNewRequest({ ...newRequest, created: text })}
                     />
 
                     {/* Submit Button */}
