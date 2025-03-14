@@ -5,7 +5,7 @@ import RequestList from '../components/RequestList';
 import { Request } from '../types/types';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { useRouter } from 'expo-router';
-import {getToken} from './firebase/auth'
+import { getToken } from './firebase/firebaseConfig';
 
 export default function App() {
     const router = useRouter();
@@ -20,7 +20,7 @@ export default function App() {
     const [newRequest, setNewRequest] = useState<Request>({
         requesterEmail: '',
         applianceName: '',
-        status: 'open', // Reset status to 'Open'
+        status: 'open', // Default status to 'Open'
         collateral: false,
         requestDuration: 60,
     });
@@ -35,45 +35,50 @@ export default function App() {
 
     // Filtered data based on user input
     const filteredRequests = requests.filter((request) =>
-        // request.applianceName.toLowerCase().includes(filter.toLowerCase()) ||
         request.status.toLowerCase().includes(filter.toLowerCase())
     );
 
     // Handler to submit new request
     const handleCreateRequest = async () => {
-        const token = await getToken(); // token from the get token method defined in firebase/auth.js
+        const token = await getToken(); // token from the get token method
         setModalVisible(false); // Close the modal
-        if(token) try {
-            const response = await fetch('http://localhost:3000/request', { // If running on an emulator, use 'http://{ip_address}:3000/request'
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'sessionToken': token
-                },
-                body: JSON.stringify(newRequest),
-            });
-    
-            if (response.ok) {
-                Alert.alert('Success', 'Request created successfully.');
-                setNewRequest({
-                    requesterEmail: '',
-                    applianceName: '',
-                    status: 'open', // Reset status to 'Open'
-                    collateral: false,
-                    requestDuration: 60,
-                }); // Reset form data
-                setRequests([...requests, newRequest]); // Add the new request to the list
-            } else {
-                const data = await response.json();
-                Alert.alert('Error', data.message);
-                return;
-            }
-    
-        } catch (error) {
-            Alert.alert('Error', 'An error occurred. Please try again.');
-            console.error(error);
-        }
+        if (token) {
+            try {
+                // Validate all required fields before sending
+                if (!newRequest.requesterEmail || !newRequest.applianceName || !newRequest.requestDuration || !newRequest.status) {
+                    Alert.alert('Error', 'Please fill out all required fields');
+                    return;
+                }
 
+                const response = await fetch('http://localhost:3000/request', { // If running on an emulator, use 'http://{ip_address}:3000/request'
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'sessionToken': token
+                    },
+                    body: JSON.stringify(newRequest),
+                });
+
+                if (response.ok) {
+                    Alert.alert('Success', 'Request created successfully.');
+                    setNewRequest({
+                        requesterEmail: '',
+                        applianceName: '',
+                        status: 'open', // Reset status to 'Open'
+                        collateral: false,
+                        requestDuration: 60
+                    }); // Reset form data
+                    setRequests([...requests, newRequest]); // Add the new request to the list
+                } else {
+                    const data = await response.json();
+                    Alert.alert('Error', data.message);
+                    return;
+                }
+            } catch (error) {
+                Alert.alert('Error', 'An error occurred. Please try again.');
+                console.error(error);
+            }
+        }
     };
 
     return (
@@ -106,9 +111,19 @@ export default function App() {
                 <View style={styles.modalContainer}>
                     <Text style={styles.modalTitle}>Create a New Request</Text>
 
+                    {/* Requester Email */}
                     <TextInput
                         style={styles.input}
-                        placeholder="Appliance"
+                        placeholder="Requester Email"
+                        placeholderTextColor="#555"
+                        value={newRequest.requesterEmail}
+                        onChangeText={(text) => setNewRequest({ ...newRequest, requesterEmail: text })}
+                    />
+
+                    {/* Appliance Name */}
+                    <TextInput
+                        style={styles.input}
+                        placeholder="Appliance Name"
                         placeholderTextColor="#555"
                         value={newRequest.applianceName}
                         onChangeText={(text) => setNewRequest({ ...newRequest, applianceName: text })}
@@ -200,3 +215,4 @@ const styles = StyleSheet.create({
         color: '#555',
     },
 });
+

@@ -1,5 +1,6 @@
 // Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
+import { getAuth, initializeApp } from "firebase/app";
+import { getAuth as firebaseAuth, getIdToken } from 'firebase/auth';
 import { getDatabase, ref, set, get } from 'firebase/database';
 import { getAnalytics, isSupported } from "firebase/analytics";
 
@@ -16,9 +17,30 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-// const app = initializeApp(firebaseConfig);
-// const database = getDatabase(app);
+const app = initializeApp(firebaseConfig);
+const database = getDatabase(app);
+const auth = firebaseAuth(app);
 
+export const getToken = async () => {
+  const user = auth.currentUser;
+
+  if (user) {
+      try {
+          // Force refresh the token to ensure it's fresh
+          const token = await user.getIdToken(true);  // true forces a refresh
+
+          console.log("Token retrieved:", token);
+
+          return token;
+      } catch (error) {
+          console.error('Error fetching Firebase token:', error);
+          return null;
+      }
+  } else {
+      console.log('No user is logged in');
+      return null;  
+  }
+};
 // make sure analytics is supported
 // let analytics;
 // isSupported().then((supported) => {
