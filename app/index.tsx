@@ -53,7 +53,7 @@ export default function Login() {
       Alert.alert('Login Success', `Logged in as: ${form.email}`);
       
       
-      router.push('/'); // Link to landing page should go here
+      router.push('/profile_page' as any); // Link to landing page should go here
     } catch (error: any) {
       console.error('Login error:', error);
       Alert.alert('Login Error', error.message);
