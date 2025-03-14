@@ -27,6 +27,13 @@ export default function Layout() {
           }}
         />
         <Drawer.Screen
+          name="applianceBoard"
+          options={{
+            drawerLabel: 'Appliances',
+            title: 'Appliance Board'
+          }}
+        />
+        <Drawer.Screen
           name="create_profile"
           options={{
             drawerItemStyle: { display: 'none' }
