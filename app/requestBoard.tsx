@@ -5,7 +5,7 @@ import RequestList from '../components/RequestList';
 import { Request } from '../types/types';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { useRouter } from 'expo-router';
-
+import {getToken} from './firebase/auth'
 
 export default function App() {
     const router = useRouter();
@@ -41,9 +41,9 @@ export default function App() {
 
     // Handler to submit new request
     const handleCreateRequest = async () => {
-        const token = "NONE"; // TODO - where do we get the token from?
+        const token = await getToken(); // token from the get token method defined in firebase/auth.js
         setModalVisible(false); // Close the modal
-        try {
+        if(token) try {
             const response = await fetch('http://localhost:3000/request', { // If running on an emulator, use 'http://{ip_address}:3000/request'
                 method: 'POST',
                 headers: {
