@@ -18,7 +18,7 @@ const RequestController = {
         // Validate request data
         const validated = RequestModel.validate(fullData);
         if (validated.error) {
-            return res.status(400).json({ error: validated.error.message });
+            return res.status(400).json({ message: validated.error.message });
         }
 
         try {
@@ -45,7 +45,7 @@ const RequestController = {
 
             res.status(201).json({ message: 'Request created successfully', requestId });
         } catch (err) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ message: err.message });
         }
     },
 
@@ -69,7 +69,7 @@ const RequestController = {
 
             res.status(200).json(snapshot.val());
         } catch (err) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ message: err.message });
         }
     },
 
@@ -115,7 +115,7 @@ const RequestController = {
             res.status(200).json(filteredRequests);
 
         } catch (err) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ message: err.message });
         }
     },
 
@@ -134,7 +134,7 @@ const RequestController = {
     
         // validate status input
         if (!["open", "fulfilled", "closed"].includes(status)) {
-            return res.status(400).json({ error: "Invalid status. Must be 'open', 'fulfilled', or 'closed'." });
+            return res.status(400).json({ message: "Invalid status. Must be 'open', 'fulfilled', or 'closed'." });
         }
     
         try {
@@ -154,7 +154,7 @@ const RequestController = {
     
             res.status(200).json({ message: 'Request status updated successfully' });
         } catch (err) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ message: err.message });
         }
     },
 
@@ -188,7 +188,7 @@ const RequestController = {
 
             res.status(200).json({ message: 'Request deleted successfully' });
         } catch (err) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ message: err.message });
         }
     }
 };
