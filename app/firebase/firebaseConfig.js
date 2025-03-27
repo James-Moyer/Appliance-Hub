@@ -29,8 +29,6 @@ export const getToken = async () => {
           // Force refresh the token to ensure it's fresh
           const token = await user.getIdToken(true);  // true forces a refresh
 
-          console.log("Token retrieved:", token);
-
           return token;
       } catch (error) {
           console.error('Error fetching Firebase token:', error);
