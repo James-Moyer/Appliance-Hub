@@ -34,6 +34,13 @@ export default function Layout() {
           }}
         />
         <Drawer.Screen
+          name="chatScreen"
+          options={{
+            drawerLabel: 'Messages',
+            title: 'Messages'
+          }}
+        />
+        <Drawer.Screen
           name="create_profile"
           options={{
             drawerItemStyle: { display: 'none' }

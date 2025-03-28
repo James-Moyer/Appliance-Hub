@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 import { SafeAreaView, StyleSheet, Text, TextInput, View, Button, Modal, Alert } from 'react-native';
-import { requests as initialRequests } from '../types/data'; // Assume this is your initial data
 import RequestList from '../components/RequestList';
 import { Request } from '../types/types';
-import DropDownPicker from 'react-native-dropdown-picker';
 import { useRouter } from 'expo-router';
 import { getValue } from '../helpers/keyfetch';
 
@@ -12,11 +10,11 @@ export default function App() {
 
     // State to hold the filter text and requests
     const [filter, setFilter] = useState('');
-    const [requests, setRequests] = useState<Request[]>(initialRequests);
+    const [requests, setRequests] = useState<Request[]>([]); // Initialize with an empty array
 
     // State for modal visibility and form data
     const [modalVisible, setModalVisible] = useState(false);
-    const [dropdownOpen, setDropdownOpen] = useState(false); // State for dropdown open
+
     const [newRequest, setNewRequest] = useState<Request>({
         requesterEmail: '',
         applianceName: '',
@@ -25,19 +23,45 @@ export default function App() {
         requestDuration: 60,
     });
 
-    const [items, setItems] = useState([
-        { label: 'Open', value: 'open' },
-        { label: 'Fulfilled', value: 'fulfilled' },
-        { label: 'Closed', value: 'closed' }
-    ]);
+    const getFilteredRequests = () => {
+        return requests.filter((request) =>
+            request.applianceName.toLowerCase().includes(filter.toLowerCase()) ||
+            request.requesterEmail.toLowerCase().includes(filter.toLowerCase())
+        );
+    };
+    
+    const fetchRequests = async () => {
+        const token = await getToken();
+        if (token) {
+            try {
+                const response = await fetch('http://localhost:3000/request', { // If running on an emulator, use 'http://{ip_address}:3000/request'
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'sessionToken': token,
+                    },
+                });
+    
+                if (response.ok) {
+                    const all_requests = await response.json();
+                    const requestsArray = Object.values(all_requests) as Request[];
+                    setRequests(requestsArray); // Set the fetched requests
+                } else {
+                    const data = await response.json();
+                    Alert.alert('Error', data.message);
+                }
+            } catch (error) {
+                Alert.alert('Error', 'An error occurred while fetching requests.');
+                console.error(error);
+            }
+        }
+    };
 
-    const [value, setValue] = useState(null);
-
-    // Filtered data based on user input
-    const filteredRequests = requests.filter((request) =>
-        request.status.toLowerCase().includes(filter.toLowerCase())
-    );
-
+    // Fetch requests when the component loads
+    React.useEffect(() => {
+        fetchRequests();
+    }, []);
+    
     // Handler to submit new request
     const handleCreateRequest = async () => {
         const token = getValue("sessionToken");
@@ -61,14 +85,16 @@ export default function App() {
 
                 if (response.ok) {
                     Alert.alert('Success', 'Request created successfully.');
+                    setRequests([...requests, newRequest]); // Add the new request to the list
+                    
+                    // Reset form data
                     setNewRequest({
-                        requesterEmail: '',
-                        applianceName: '',
+                        requesterEmail: newRequest.requesterEmail,
+                        applianceName: newRequest.applianceName,
                         status: 'open', // Reset status to 'Open'
                         collateral: false,
                         requestDuration: 60
-                    }); // Reset form data
-                    setRequests([...requests, newRequest]); // Add the new request to the list
+                    });
                 } else {
                     const data = await response.json();
                     Alert.alert('Error', data.message);
@@ -91,15 +117,17 @@ export default function App() {
             {/* Search Bar */}
             <TextInput
                 style={styles.searchBar}
-                placeholder="Search for requester, appliance, status, or date..."
+                placeholder="Search by appliance or owner..."
                 placeholderTextColor="#555"
                 value={filter}
                 onChangeText={setFilter}
             />
 
+            <Button title="Refresh" onPress={fetchRequests} />
+
             {/* Request List */}
             <SafeAreaView style={styles.container}>
-                <RequestList data={filteredRequests} />
+                <RequestList data={getFilteredRequests()} />
             </SafeAreaView>
 
             {/* Modal for creating a request */}
@@ -127,24 +155,6 @@ export default function App() {
                         placeholderTextColor="#555"
                         value={newRequest.applianceName}
                         onChangeText={(text) => setNewRequest({ ...newRequest, applianceName: text })}
-                    />
-
-                    {/* Status Dropdown */}
-                    <DropDownPicker
-                        items={items}
-                        placeholder="Select Status"
-                        value={value}
-                        open={dropdownOpen}
-                        setOpen={setDropdownOpen}
-                        setValue={setValue}
-                        onChangeValue={(value) => {
-                            if (value) {
-                                setNewRequest({ ...newRequest, status: value as 'open' | 'fulfilled' | 'closed' });
-                            }
-                        }}
-                        containerStyle={styles.pickerContainer}
-                        style={styles.picker}
-                        textStyle={styles.pickerText}
                     />
 
                     {/* Submit Button */}
