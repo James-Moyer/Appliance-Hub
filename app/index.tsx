@@ -12,6 +12,7 @@ import {
 import { useRouter } from 'expo-router';
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
+import { saveInStore } from '../helpers/keyfetch';
 
 // Import Firebase configuration – adjust the path if necessary
 import firebaseConfig from './firebase/firebaseConfig.js';
@@ -47,13 +48,15 @@ export default function Login() {
       console.log("Fetching token...");
       // Retrieve the ID token (a JWT)
       const idToken = await userCredential.user.getIdToken();
-      console.log("Credential: " + userCredential);
-      console.log("Token: " + idToken);
-      setToken(idToken);
+      // console.log("Credential: " + userCredential);
+      // console.log("Token: " + idToken);
+      // console.log("UID: " + userCredential.user.uid);
+      saveInStore("userToken", idToken); // Session token is stored as "userToken"
+      saveInStore("UID", userCredential.user.uid); // Save UID locally so we know what profile is the one signed in
       Alert.alert('Login Success', `Logged in as: ${form.email}`);
       
       
-      router.push('/profile_page' as any); // Link to landing page should go here
+      router.push('/profile_page' as any);
     } catch (error: any) {
       console.error('Login error:', error);
       Alert.alert('Login Error', error.message);

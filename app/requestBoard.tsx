@@ -5,7 +5,7 @@ import RequestList from '../components/RequestList';
 import { Request } from '../types/types';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { useRouter } from 'expo-router';
-import { getToken } from './firebase/firebaseConfig';
+import { getValue } from '../helpers/keyfetch';
 
 export default function App() {
     const router = useRouter();
@@ -40,7 +40,7 @@ export default function App() {
 
     // Handler to submit new request
     const handleCreateRequest = async () => {
-        const token = await getToken(); // token from the get token method
+        const token = getValue("userToken");
         setModalVisible(false); // Close the modal
         if (token) {
             try {

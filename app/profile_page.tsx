@@ -1,6 +1,7 @@
 // app/ProfilePage.tsx
 import React from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
+import * as SecureStore from 'expo-secure-store';
 
 const ProfilePage: React.FC = () => {
   return (
