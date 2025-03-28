@@ -2,8 +2,8 @@ const Joi = require("joi");
 
 class MessageModel {
   static schema = Joi.object({
-    sender: Joi.string().required(),
-    recipient: Joi.string().required(),
+    senderUid: Joi.string().required(),
+    recipientUid: Joi.string().required(),
     text: Joi.string().min(1).max(1000).required(),
     timestamp: Joi.date().timestamp().required()
   });
@@ -19,3 +19,4 @@ class MessageModel {
 }
 
 module.exports = MessageModel;
+

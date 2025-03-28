@@ -10,16 +10,9 @@ import {
   TouchableWithoutFeedback
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { initializeApp } from 'firebase/app';
-import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 import { saveInStore } from '../helpers/keyfetch';
-
-// Import Firebase configuration – adjust the path if necessary
-import firebaseConfig from './firebase/firebaseConfig.js';
-
-// Initialize Firebase and Auth (ensure this is done only once in your app)
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
+import { auth } from './firebase/firebaseConfig';
 
 export default function Login() {
   const router = useRouter();
