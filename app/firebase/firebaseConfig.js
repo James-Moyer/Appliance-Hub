@@ -21,24 +21,6 @@ const app = initializeApp(firebaseConfig);
 const database = getDatabase(app);
 const auth = firebaseAuth(app);
 
-export const getToken = async () => {
-  const user = auth.currentUser;
-
-  if (user) {
-      try {
-          // Force refresh the token to ensure it's fresh
-          const token = await user.getIdToken(true);  // true forces a refresh
-
-          return token;
-      } catch (error) {
-          console.error('Error fetching Firebase token:', error);
-          return null;
-      }
-  } else {
-      console.log('No user is logged in');
-      return null;  
-  }
-};
 // make sure analytics is supported
 // let analytics;
 // isSupported().then((supported) => {
@@ -48,4 +30,6 @@ export const getToken = async () => {
 // });
 
 export default firebaseConfig;
+
+export { auth };
 // export { database, ref, set, get };
