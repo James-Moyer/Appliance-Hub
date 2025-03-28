@@ -22,7 +22,6 @@ const MessageController = {
 
     try {
       const verifiedUser = await verifyLogin(token);
-
       if (verifiedUser.errorCode) {
         return res.status(400).json({
           code: verifiedUser.errorCode,
@@ -30,11 +29,13 @@ const MessageController = {
         });
       }
 
-      if (validated.sender !== verifiedUser.email) {
+      // Ensure that the sender UID in the request matches the authenticated user's UID
+      if (validated.senderUid !== verifiedUser.uid) {
         return res.status(403).json({ message: "Cannot send message as another user" });
       }
 
-      const conversationId = [validated.sender, validated.recipient].sort().join("_"); // always set in the same order regardless of user sending message
+      // Build conversation ID using UIDs
+      const conversationId = [validated.senderUid, validated.recipientUid].sort().join("_");
       const messageId = uuidv4();
 
       await db.ref(`messages/${conversationId}/${messageId}`).set({
@@ -51,15 +52,14 @@ const MessageController = {
   // Get messages in a conversation
   getMessages: async (req, res) => {
     const token = req.get("sessionToken");
-    const { userA, userB } = req.query;
+    const { userAUid, userBUid } = req.query;
 
-    if (!userA || !userB) {
+    if (!userAUid || !userBUid) {
       return res.status(400).json({ message: 'Missing user parameters' });
     }
 
     try {
       const verifiedUser = await verifyLogin(token);
-
       if (verifiedUser.errorCode) {
         return res.status(400).json({
           code: verifiedUser.errorCode,
@@ -67,14 +67,16 @@ const MessageController = {
         });
       }
 
-      if (verifiedUser.email !== userA && verifiedUser.email !== userB) {
+      // Only allow users involved in the conversation to fetch messages
+      if (verifiedUser.uid !== userAUid && verifiedUser.uid !== userBUid) {
         return res.status(403).json({ message: "Not authorized to view this conversation" });
       }
 
-      const conversationId = [userA, userB].sort().join("_"); // always retrieves a valid stored conversation if one exists
+      // Build conversation ID using UIDs
+      const conversationId = [userAUid, userBUid].sort().join("_");
       const snapshot = await db.ref(`messages/${conversationId}`).once('value');
 
-      if (!snapshot.exists()) { // an empty conversation is returned if no messages have been exchanged between the two users
+      if (!snapshot.exists()) {
         return res.status(200).json([]);
       }
 
