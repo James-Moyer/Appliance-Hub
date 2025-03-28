@@ -40,7 +40,7 @@ export default function App() {
 
     // Handler to submit new request
     const handleCreateRequest = async () => {
-        const token = getValue("userToken");
+        const token = getValue("sessionToken");
         setModalVisible(false); // Close the modal
         if (token) {
             try {
