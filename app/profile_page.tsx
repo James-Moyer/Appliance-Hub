@@ -1,6 +1,24 @@
 // app/ProfilePage.tsx
 import React from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
+import { getValue } from '../helpers/keyfetch'; // Use this to access user info
+
+// const uid = getValue("UID");
+// const token = getValue("sessionToken");
+// const response = await fetch('http://localhost:3000/user/'+uid, { // If running on an emulator, use 'http://{ip_address}:3000/request'
+//   method: 'GET',
+//   headers: {
+//       'Content-Type': 'application/json',
+//       'sessionToken': token
+//   },
+//   body: JSON.stringify(newRequest),
+// });
+// if response status is 200:
+//   const username = response.user.username;
+//   const emal = response.user.email;
+//   etc etc...
+// else:
+//   display an error
 
 const ProfilePage: React.FC = () => {
   return (

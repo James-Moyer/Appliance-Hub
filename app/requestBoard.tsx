@@ -3,7 +3,7 @@ import { SafeAreaView, StyleSheet, Text, TextInput, View, Button, Modal, Alert }
 import RequestList from '../components/RequestList';
 import { Request } from '../types/types';
 import { useRouter } from 'expo-router';
-import { getToken } from './firebase/firebaseConfig';
+import { getValue } from '../helpers/keyfetch';
 
 export default function App() {
     const router = useRouter();
@@ -64,7 +64,7 @@ export default function App() {
     
     // Handler to submit new request
     const handleCreateRequest = async () => {
-        const token = await getToken();
+        const token = getValue("sessionToken");
         setModalVisible(false); // Close the modal
         if (token) {
             try {
