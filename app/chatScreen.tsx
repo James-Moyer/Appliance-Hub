@@ -10,6 +10,7 @@ import {
 import { Appbar } from "react-native-paper";
 import { getAuth } from "firebase/auth";
 import { getValue } from '../helpers/keyfetch';
+import { USERS_ENDPOINT, MESSAGES_ENDPOINT } from '../constants/constants';
 
 type UserType = {
   uid: string;
@@ -48,7 +49,7 @@ export default function ChatScreen() {
       const token = await getValue("sessionToken"); // get the Firebase ID token
       if (!token) return;
 
-      const response = await fetch("http://localhost:3000/user", {
+      const response = await fetch(USERS_ENDPOINT, {
         headers: {
           "sessionToken": token
         }
@@ -81,7 +82,7 @@ export default function ChatScreen() {
       if (!token) return;
 
       // Fetch messages using UIDs as query parameters
-      const url = `http://localhost:3000/message?userAUid=${myUid}&userBUid=${user.uid}`;
+      const url = `${MESSAGES_ENDPOINT}?userAUid=${myUid}&userBUid=${user.uid}`;
       const response = await fetch(url, {
         headers: {
           "sessionToken": token
@@ -115,7 +116,7 @@ export default function ChatScreen() {
         text: textToSend
       };
 
-      const response = await fetch("http://localhost:3000/message", {
+      const response = await fetch(MESSAGES_ENDPOINT, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
