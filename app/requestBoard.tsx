@@ -4,6 +4,7 @@ import RequestList from '../components/RequestList';
 import { Request } from '../types/types';
 import { useRouter } from 'expo-router';
 import { getValue } from '../helpers/keyfetch';
+import { REQUESTS_ENDPOINT } from '../constants/constants';
 
 export default function App() {
     const router = useRouter();
@@ -34,7 +35,7 @@ export default function App() {
         const token = await getValue("sessionToken");
         if (token) {
             try {
-                const response = await fetch('http://localhost:3000/request', { // If running on an emulator, use 'http://{ip_address}:3000/request'
+                const response = await fetch(REQUESTS_ENDPOINT, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
@@ -74,7 +75,7 @@ export default function App() {
                     return;
                 }
 
-                const response = await fetch('http://localhost:3000/request', { // If running on an emulator, use 'http://{ip_address}:3000/request'
+                const response = await fetch(REQUESTS_ENDPOINT, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

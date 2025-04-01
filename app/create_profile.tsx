@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Keyboard, TouchableWithoutFeedback } from 'react-native';
 import { useRouter } from 'expo-router';
+import { USERS_ENDPOINT } from '../constants/constants';
 
 export default function CreateProfile() {
   const router = useRouter();
@@ -27,7 +28,7 @@ export default function CreateProfile() {
     }
 
     try {
-      const response = await fetch('http://localhost:3000/user', { // If running on an emulator, use 'http://{ip_address}:3000/user'
+      const response = await fetch(USERS_ENDPOINT, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
