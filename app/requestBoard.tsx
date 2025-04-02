@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { SafeAreaView, StyleSheet, Text, TextInput, View, Button, Modal, Alert } from 'react-native';
+import DropDownPicker from 'react-native-dropdown-picker';
+import { getAuth } from "firebase/auth";
 import RequestList from '../components/RequestList';
 import { Request } from '../types/types';
 import { useRouter } from 'expo-router';
@@ -9,12 +11,8 @@ import { REQUESTS_ENDPOINT } from '../constants/constants';
 export default function App() {
     const router = useRouter();
 
-    // State to hold the filter text and requests
-    const [filter, setFilter] = useState('');
-    const [requests, setRequests] = useState<Request[]>([]); // Initialize with an empty array
-
-    // State for modal visibility and form data
-    const [modalVisible, setModalVisible] = useState(false);
+    const [myEmail, setMyEmail] = useState("");
+    
 
     const [newRequest, setNewRequest] = useState<Request>({
         requesterEmail: '',
@@ -23,6 +21,17 @@ export default function App() {
         collateral: false,
         requestDuration: 60,
     });
+
+
+    // State to hold the filter text and requests
+    const [filter, setFilter] = useState('');
+    const [requests, setRequests] = useState<Request[]>([]); // Initialize with an empty array
+
+    // State for modal visibility and form data
+    const [modalVisible, setModalVisible] = useState(false);
+    const [collateralPickerOpen, setCollateralPickerOpen] = useState(false);
+    const [durationPickerOpen, setDurationPickerOpen] = useState(false);
+
 
     const getFilteredRequests = () => {
         return requests.filter((request) =>
@@ -61,6 +70,11 @@ export default function App() {
     // Fetch requests when the component loads
     React.useEffect(() => {
         fetchRequests();
+        const auth = getAuth();
+        const currentUser = auth.currentUser;
+        if (currentUser && currentUser.email) {
+            setMyEmail(currentUser.email);
+        }
     }, []);
     
     // Handler to submit new request
@@ -69,37 +83,40 @@ export default function App() {
         setModalVisible(false); // Close the modal
         if (token) {
             try {
-                // Validate all required fields before sending
-                if (!newRequest.requesterEmail || !newRequest.applianceName || !newRequest.requestDuration || !newRequest.status) {
-                    Alert.alert('Error', 'Please fill out all required fields');
-                    return;
-                }
+                if (myEmail != null) {
+                    newRequest.requesterEmail = myEmail; // Set the requester email to the current user's email
+                    // Validate all required fields before sending
+                    if (!newRequest.requesterEmail || !newRequest.applianceName || !newRequest.requestDuration || !newRequest.status) {
+                        Alert.alert('Error', 'Please fill out all required fields');
+                        return;
+                    }
 
-                const response = await fetch(REQUESTS_ENDPOINT, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'sessionToken': token
-                    },
-                    body: JSON.stringify(newRequest),
-                });
-
-                if (response.ok) {
-                    Alert.alert('Success', 'Request created successfully.');
-                    setRequests([...requests, newRequest]); // Add the new request to the list
-                    
-                    // Reset form data
-                    setNewRequest({
-                        requesterEmail: newRequest.requesterEmail,
-                        applianceName: newRequest.applianceName,
-                        status: 'open', // Reset status to 'Open'
-                        collateral: false,
-                        requestDuration: 60
+                    const response = await fetch(REQUESTS_ENDPOINT, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'sessionToken': token
+                        },
+                        body: JSON.stringify(newRequest),
                     });
-                } else {
-                    const data = await response.json();
-                    Alert.alert('Error', data.message);
-                    return;
+
+                    if (response.ok) {
+                        Alert.alert('Success', 'Request created successfully.');
+                        setRequests([...requests, newRequest]); // Add the new request to the list
+                        
+                        // Reset form data
+                        setNewRequest({
+                            requesterEmail: newRequest.requesterEmail,
+                            applianceName: '',
+                            status: 'open', // Reset status to 'Open'
+                            collateral: newRequest.collateral,
+                            requestDuration: newRequest.requestDuration,
+                        });
+                    } else {
+                        const data = await response.json();
+                        Alert.alert('Error', data.message);
+                        return;
+                    }
                 }
             } catch (error) {
                 Alert.alert('Error', 'An error occurred. Please try again.');
@@ -140,15 +157,6 @@ export default function App() {
                 <View style={styles.modalContainer}>
                     <Text style={styles.modalTitle}>Create a New Request</Text>
 
-                    {/* Requester Email */}
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Requester Email"
-                        placeholderTextColor="#555"
-                        value={newRequest.requesterEmail}
-                        onChangeText={(text) => setNewRequest({ ...newRequest, requesterEmail: text })}
-                    />
-
                     {/* Appliance Name */}
                     <TextInput
                         style={styles.input}
@@ -157,6 +165,57 @@ export default function App() {
                         value={newRequest.applianceName}
                         onChangeText={(text) => setNewRequest({ ...newRequest, applianceName: text })}
                     />
+
+                    {/* Collateral (true/false) */}
+                    <View style={[styles.inputContainer, collateralPickerOpen ? { zIndex: 2 } : { zIndex: 1 }]}>
+                        <Text style={styles.label}>Collateral:</Text>
+                        <DropDownPicker
+                            open={collateralPickerOpen}
+                            setOpen={setCollateralPickerOpen}
+                            value={newRequest.collateral} // Set the current value
+                            setValue={(callback) => {
+                                const selectedValue = callback(newRequest.collateral);
+                                setNewRequest({
+                                    ...newRequest,
+                                    collateral: selectedValue,
+                                });
+                            }}
+                            items={[
+                                { label: 'Yes', value: true },
+                                { label: 'No', value: false },
+                            ]}
+                            style={styles.picker}
+                            textStyle={styles.pickerText}
+                            containerStyle={styles.pickerContainer}
+                        />
+                    </View>
+
+                    {/* Request Duration (in hours) */}
+                    <View style={[styles.inputContainer, durationPickerOpen ? { zIndex: 2 } : { zIndex: 1 }]}>
+                        <Text style={styles.label}>Request Duration (in hours):</Text>
+                        <DropDownPicker
+                            open={durationPickerOpen}
+                            setOpen={setDurationPickerOpen}
+                            value={newRequest.requestDuration as number} // Ensure the value is a primitive number
+                            setValue={(callback) => {
+                                const selectedValue = callback(newRequest.requestDuration);
+                                setNewRequest({
+                                    ...newRequest,
+                                    requestDuration: selectedValue,
+                                });
+                            }}
+                            items={[
+                                { label: '4 hours', value: 4 },
+                                { label: '8 hours', value: 8 },
+                                { label: '12 hours', value: 12 },
+                                { label: '24 hours', value: 24 },
+                                { label: '48 hours', value: 48 },
+                            ]}
+                            style={styles.picker}
+                            textStyle={styles.pickerText}
+                            containerStyle={styles.pickerContainer}
+                        />
+                    </View>
 
                     {/* Submit Button */}
                     <Button title="Submit Request" onPress={handleCreateRequest} />
@@ -175,6 +234,15 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
         alignItems: 'center',
         justifyContent: 'flex-start',
+    },
+    inputContainer: {
+        width: '90%',
+        marginBottom: 10,
+    },
+    label: {
+        fontSize: 16,
+        marginBottom: 5,
+        color: '#333',
     },
     name: {
         fontSize: 24,
