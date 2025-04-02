@@ -13,6 +13,8 @@ const RequestList: React.FC<Props> = ({ data }) => {
             <Text style={styles.title}>{item.applianceName}</Text>
             <Text>Owner: {item.requesterEmail}</Text>
             <Text>Status: {item.status}</Text>
+            <Text>Collateral: {item.collateral ? 'Yes' : 'No'}</Text>
+            <Text>Request Duration: {item.requestDuration.toString()} hours</Text>
         </View>
     );
 
