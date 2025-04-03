@@ -1,20 +1,30 @@
+// backend/routes/user.js
 const express = require('express');
 const router = express.Router();
 const UserController = require('../controllers/UserController');
 
-// Create user
+// CREATE user
 router.post('/', UserController.createUser);
 
-// Get all users
+// GET user by email (for public profile)
+router.get('/byemail/:email', UserController.getUserByEmail);
+
+// GET all users
 router.get('/', UserController.getAllUsers);
 
-// Get a certain user
+// GET a certain user by username
 router.get('/:username', UserController.getUser);
 
-// Update a user
+// UPDATE a user by username
 router.put('/:username', UserController.updateUser);
 
-// Delete a user
+// DELETE a user by UID
 router.delete('/:uid', UserController.deleteUser);
+
+// GET a user by UID
+router.get('/byuid/:uid', UserController.getUserByUID);
+
+// UPDATE a user by UID
+router.put('/byuid/:uid', UserController.updateUserByUID);
 
 module.exports = router;

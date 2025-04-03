@@ -57,6 +57,12 @@ export default function Layout() {
           options={{
             drawerItemStyle: { display: 'none' }
           }}
+          />
+        <Drawer.Screen
+          name="public_profile"
+          options={{
+            drawerItemStyle: { display: 'none' }
+          }}
         />
       </Drawer>
     </GestureHandlerRootView>
