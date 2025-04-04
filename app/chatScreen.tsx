@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { Appbar } from "react-native-paper";
 import { getAuth } from "firebase/auth";
-import { getValue } from '../helpers/keyfetch';
+import { getFromStore } from '../helpers/keyfetch';
 import { USERS_ENDPOINT, MESSAGES_ENDPOINT } from '../constants/constants';
 
 type UserType = {
@@ -46,7 +46,7 @@ export default function ChatScreen() {
 
   const loadAllUsers = async () => {
     try {
-      const token = await getValue("sessionToken"); // get the Firebase ID token
+      const token = await getFromStore("sessionToken"); // get the Firebase ID token
       if (!token) return;
 
       const response = await fetch(USERS_ENDPOINT, {
@@ -78,7 +78,7 @@ export default function ChatScreen() {
     setMessages([]); // Clear previous messages
 
     try {
-      const token = await getValue("sessionToken");
+      const token = await getFromStore("sessionToken");
       if (!token) return;
 
       // Fetch messages using UIDs as query parameters
@@ -106,7 +106,7 @@ export default function ChatScreen() {
     const textToSend = input.trim();
 
     try {
-      const token = await getValue("sessionToken");
+      const token = await getFromStore("sessionToken");
       if (!token) return;
 
       // Send UIDs instead of emails

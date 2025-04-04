@@ -1,21 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { SafeAreaView, StyleSheet, Text, TextInput, View, Button, Modal, Alert } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { getAuth } from "firebase/auth";
 import RequestList from '../components/RequestList';
 import { Request } from '../types/types';
 import { useRouter } from 'expo-router';
-import { getValue } from '../helpers/keyfetch';
+import { getFromStore } from '../helpers/keyfetch';
 import { REQUESTS_ENDPOINT } from '../constants/constants';
+import { SessionContext } from '@/helpers/sessionContext';
 
 export default function App() {
     const router = useRouter();
 
-    const [myEmail, setMyEmail] = useState("");
-    
+    const {sessionContext} = useContext(SessionContext);
 
+    const myEmail = sessionContext.email;
+    
     const [newRequest, setNewRequest] = useState<Request>({
-        requesterEmail: '',
+        requesterEmail: myEmail,
         applianceName: '',
         status: 'open', // Default status to 'Open'
         collateral: false,
@@ -32,6 +34,9 @@ export default function App() {
     const [collateralPickerOpen, setCollateralPickerOpen] = useState(false);
     const [durationPickerOpen, setDurationPickerOpen] = useState(false);
 
+    // State so we don't send too many requests- users can use the refresh button
+    const [requestsFetched, setFetched] = useState(false);
+
 
     const getFilteredRequests = () => {
         return requests.filter((request) =>
@@ -41,24 +46,28 @@ export default function App() {
     };
     
     const fetchRequests = async () => {
-        const token = await getValue("sessionToken");
+        const token = sessionContext.token;
+        console.log("fetching requests...");
         if (token) {
             try {
                 const response = await fetch(REQUESTS_ENDPOINT, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
-                        'sessionToken': token,
+                        'sessionToken': String(token),
                     },
                 });
     
                 if (response.ok) {
+                    console.log("fetched requests ok");
                     const all_requests = await response.json();
                     const requestsArray = Object.values(all_requests) as Request[];
                     setRequests(requestsArray); // Set the fetched requests
+                    setFetched(true);
                 } else {
                     const data = await response.json();
                     Alert.alert('Error', data.message);
+                    console.log("Error fetching: ", data);
                 }
             } catch (error) {
                 Alert.alert('Error', 'An error occurred while fetching requests.');
@@ -66,41 +75,34 @@ export default function App() {
             }
         }
     };
-
-    // Fetch requests when the component loads
-    React.useEffect(() => {
-        fetchRequests();
-        const auth = getAuth();
-        const currentUser = auth.currentUser;
-        if (currentUser && currentUser.email) {
-            setMyEmail(currentUser.email);
-        }
-    }, []);
     
     // Handler to submit new request
     const handleCreateRequest = async () => {
-        const token = await getValue("sessionToken");
+        const token = sessionContext.token;
+        console.log("Creating a request");
         setModalVisible(false); // Close the modal
         if (token) {
             try {
                 if (myEmail != null) {
-                    newRequest.requesterEmail = myEmail; // Set the requester email to the current user's email
+                    // newRequest.requesterEmail = myEmail; // Set the requester email to the current user's email
                     // Validate all required fields before sending
                     if (!newRequest.requesterEmail || !newRequest.applianceName || !newRequest.requestDuration || !newRequest.status) {
                         Alert.alert('Error', 'Please fill out all required fields');
+                        console.log("Not enough data entered: ", newRequest);
                         return;
                     }
 
                     const response = await fetch(REQUESTS_ENDPOINT, {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'sessionToken': token
-                        },
+                        headers: new Headers({
+                            "Content-Type" : "application/json",
+                            "sessionToken" : String(token)
+                        }),
                         body: JSON.stringify(newRequest),
                     });
 
                     if (response.ok) {
+                        console.log("got back ok!");
                         Alert.alert('Success', 'Request created successfully.');
                         setRequests([...requests, newRequest]); // Add the new request to the list
                         
@@ -115,6 +117,7 @@ export default function App() {
                     } else {
                         const data = await response.json();
                         Alert.alert('Error', data.message);
+                        console.log("Error: ", data);
                         return;
                     }
                 }
@@ -122,8 +125,20 @@ export default function App() {
                 Alert.alert('Error', 'An error occurred. Please try again.');
                 console.error(error);
             }
+        } else {
+            console.log("no token!", sessionContext);
         }
     };
+
+    // Fetch requests when the component loads
+    React.useEffect(() => {
+        if (sessionContext.isLoggedIn != "true") {
+            router.push("/" as any); // Redirect to login page if not signed in
+        }
+        if (!requestsFetched) {
+            fetchRequests();
+        }
+    });
 
     return (
         <View style={styles.container}>

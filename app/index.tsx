@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import {
   View,
   Text,
@@ -11,16 +11,17 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { saveInStore } from '../helpers/keyfetch';
+import { saveInStore, getFromStore } from '../helpers/keyfetch';
 import { auth } from './firebase/firebaseConfig';
+import { SessionContext } from "../helpers/sessionContext";
 
 export default function Login() {
   const router = useRouter();
 
+  const { sessionContext, setContext } = useContext(SessionContext);
+
   // Form state for login (email & password)
   const [form, setForm] = useState({ email: '', password: '' });
-  // State to store the token after login (if needed later)
-  const [token, setToken] = useState('');
 
   // Update form fields
   const handleChange = (key: keyof typeof form, value: string) => {
@@ -49,22 +50,52 @@ export default function Login() {
       console.log("Fetching token...");
       // Retrieve the ID token (a JWT)
       const idToken = await userCredential.user.getIdToken();
-      // console.log("Credential: " + userCredential);
-      // console.log("Token: " + idToken);
+      
+      console.log("Token: " + idToken);
       // console.log("UID: " + userCredential.user.uid);
-      saveInStore("sessionToken", idToken); // Session token is stored as "userToken"
-      saveInStore("UID", userCredential.user.uid); // Save UID locally so we know what profile is the one signed in
-      Alert.alert('Login Success', `Logged in as: ${form.email}`);
-      
-      
-      router.push('/profile_page' as any);
+
+      await setContext({ // Sets context asynchoronously, needs to se entire context at once
+        isLoggedIn : "true",
+        UID : userCredential.user.uid,
+        email : userCredential.user.email,
+        token : idToken,
+      });
+
+      // Save to Async Store for future sessions
+      await saveInStore("sessionToken", idToken); // Session token is stored as "userToken"
+      await saveInStore("UID", userCredential.user.uid); // Save UID locally so we know what profile is the one signed in
+      await saveInStore("isLoggedIn", "true"); // mark user as logged in
+
     } catch (error: any) {
       console.error('Login error:', error);
       Alert.alert('Login Error', error.message);
     }
   };
 
+  const checkSecureStore = async () => {
+    const tokenres = await getFromStore("SessionToken");
+    const uidres = await getFromStore("UID");
+    if (tokenres && uidres) { // Set state vars and redirect to profile page if already logged in
+      console.log("Tokens returned, redirecting into the app!")
+      setContext({
+        isLoggedIn : "true",
+        UID : uidres,
+        token : tokenres,
+      });
+    }
+  }
+
+  React.useEffect(() => {
+    console.log("Session: ", sessionContext);
+    if (sessionContext.isLoggedIn == "true") {
+      router.push("/profile_page" as any);
+    } else {
+      checkSecureStore();
+    }
+  });
+
   return (
+    <SessionContext.Provider value={sessionContext}>
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
       <View style={styles.container}>
         <Text style={styles.title}>Login</Text>
@@ -100,6 +131,7 @@ export default function Login() {
         </TouchableOpacity>
       </View>
     </TouchableWithoutFeedback>
+    </SessionContext.Provider>
   );
 }
 
