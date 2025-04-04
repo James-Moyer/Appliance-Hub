@@ -27,7 +27,7 @@ export default function CreateProfile() {
     }
 
     try {
-      const response = await fetch('http://localhost:3000/user', { // If running on an emulator, use 'http://{ip_address}:3000/user'
+      const response = await fetch('http://192.168.10.103:3000/user', { // If running on an emulator, use 'http://{ip_address}:3000/user'
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -47,8 +47,8 @@ export default function ChatScreen() {
     try {
       const token = await getValue("sessionToken"); // get the Firebase ID token
       if (!token) return;
-
-      const response = await fetch("http://localhost:3000/user", {
+      //
+      const response = await fetch("http://192.168.10.103:3000/user", {
         headers: {
           "sessionToken": token
         }
@@ -81,7 +81,7 @@ export default function ChatScreen() {
       if (!token) return;
 
       // Fetch messages using UIDs as query parameters
-      const url = `http://localhost:3000/message?userAUid=${myUid}&userBUid=${user.uid}`;
+      const url = `http://192.168.10.103:3000/message?userAUid=${myUid}&userBUid=${user.uid}`;
       const response = await fetch(url, {
         headers: {
           "sessionToken": token
@@ -115,7 +115,7 @@ export default function ChatScreen() {
         text: textToSend
       };
 
-      const response = await fetch("http://localhost:3000/message", {
+      const response = await fetch("http://192.168.10.103:3000/message", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
