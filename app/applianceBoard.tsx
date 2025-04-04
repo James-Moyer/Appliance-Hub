@@ -1,17 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { SafeAreaView, StyleSheet, Text, TextInput, View, Button, Modal, Alert } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { getAuth } from 'firebase/auth';
 import ApplianceList from '../components/ApplianceList';
 import { Appliance } from '../types/types';
 import { useRouter } from 'expo-router';
-import { getValue } from '../helpers/keyfetch';
+import { SessionContext } from '@/helpers/sessionContext';
+import { getFromStore } from '../helpers/keyfetch';
 import { APPLIANCES_ENDPOINT } from '../constants/constants';
 
 export default function App() {
     const router = useRouter();
     const [myEmail, setMyEmail] = useState('');
     const [myUid, setMyUid] = useState('');
+    const {sessionContext} = useContext(SessionContext);
     const [newAppliance, setNewAppliance] = useState<Appliance>({
         ownerUsername: '',
         name: '',
@@ -28,14 +30,14 @@ export default function App() {
     const [visibilityDropdownOpen, setVisibilityDropdownOpen] = useState(false);
 
     const fetchAppliances = async () => {
-        const token = await getValue('sessionToken');
+        const token = sessionContext.token;
         if (token) {
             try {
                 const response = await fetch(APPLIANCES_ENDPOINT, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
-                        'sessionToken': token,
+                        'sessionToken': String(token),
                     },
                 });
 
@@ -63,7 +65,7 @@ export default function App() {
     }, []);
 
     const handleCreateAppliance = async () => {
-        const token = await getValue('sessionToken');
+        const token = sessionContext.token;
         setModalVisible(false);
         if (token && myEmail && myUid) {
             try {
@@ -77,7 +79,7 @@ export default function App() {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'sessionToken': token,
+                        'sessionToken': String(token),
                     },
                     body: JSON.stringify(applianceWithOwnerUid),
                 });

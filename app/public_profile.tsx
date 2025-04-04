@@ -10,6 +10,7 @@ import {
 import { useLocalSearchParams } from 'expo-router';
 // import { getFromStore } from '../helpers/keyfetch';
 import { SessionContext } from '@/helpers/sessionContext';
+import { USERS_ENDPOINT } from '../constants/constants';
 
 interface UserData {
   username?: string;
@@ -45,9 +46,8 @@ export default function PublicProfile() {
           setLoading(false);
           return;
         }
-
-        // If using Android emulator, change localhost -> 10.0.2.2
-        const response = await fetch(`http://localhost:3000/user/byemail/${email}`, {
+        
+        const response = await fetch(`${USERS_ENDPOINT}/byemail/${email}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',

@@ -51,7 +51,8 @@ export default function ChatScreen() {
 
       const response = await fetch(USERS_ENDPOINT, {
         headers: {
-          "sessionToken": token
+          "Content-Type": "application/json",
+          'sessionToken': String(token),
         }
       });
 
@@ -85,7 +86,8 @@ export default function ChatScreen() {
       const url = `${MESSAGES_ENDPOINT}?userAUid=${myUid}&userBUid=${user.uid}`;
       const response = await fetch(url, {
         headers: {
-          "sessionToken": token
+          "Content-Type": "application/json",
+          'sessionToken': String(token),
         }
       });
 
@@ -120,7 +122,7 @@ export default function ChatScreen() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "sessionToken": token
+          'sessionToken': String(token),
         },
         body: JSON.stringify(bodyData)
       });
