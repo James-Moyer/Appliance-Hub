@@ -1,60 +1,119 @@
-import React, { useState } from 'react';
-import { SafeAreaView, StyleSheet, Text, TextInput, View, Button, Modal } from 'react-native';
-import { appliances as initialAppliances } from '../types/data'; // Assume this is your initial data
-import { Appliance } from '../types/types';
-import ApplianceList from '../components/ApplianceList'; // Make sure this import is correct
+import React, { useState, useEffect } from 'react';
+import { SafeAreaView, StyleSheet, Text, TextInput, View, Button, Modal, Alert } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
+import { getAuth } from 'firebase/auth';
+import ApplianceList from '../components/ApplianceList';
+import { Appliance } from '../types/types';
+import { useRouter } from 'expo-router';
+import { getValue } from '../helpers/keyfetch';
+import { APPLIANCES_ENDPOINT } from '../constants/constants';
 
 export default function App() {
-    // State to hold the filter text and appliances
-    const [filter, setFilter] = useState('');
-    const [appliances, setAppliances] = useState<Appliance[]>(initialAppliances);
-
-    // State for modal visibility and form data
-    const [modalVisible, setModalVisible] = useState(false);
-    const [dropdownOpen, setDropdownOpen] = useState(false);
-    const [value, setValue] = useState<'Same Floor' | 'Same Dorm' | 'Anyone'>('Anyone');
-
+    const router = useRouter();
+    const [myEmail, setMyEmail] = useState('');
+    const [myUid, setMyUid] = useState('');
     const [newAppliance, setNewAppliance] = useState<Appliance>({
-        id: String(appliances.length + 1),
         ownerUsername: '',
-        Name: '',
-        Description: '',
+        name: '',
+        description: '',
         timeAvailable: 24,
         lendTo: 'Anyone',
         isVisible: true,
-        created: new Date().toISOString(),
     });
 
-    // Dropdown items for 'lendTo'
-    const [items, setItems] = useState([
-        { label: 'Same Floor', value: 'Same Floor' },
-        { label: 'Same Dorm', value: 'Same Dorm' },
-        { label: 'Anyone', value: 'Anyone' },
-    ]);
+    const [appliances, setAppliances] = useState<Appliance[]>([]);
+    const [filter, setFilter] = useState('');
+    const [modalVisible, setModalVisible] = useState(false);
+    const [lendToDropdownOpen, setLendToDropdownOpen] = useState(false);
+    const [visibilityDropdownOpen, setVisibilityDropdownOpen] = useState(false);
 
-    // Filter appliances based on user input
-    const filteredAppliances = appliances.filter((appliance) =>
-        appliance.ownerUsername.toLowerCase().includes(filter.toLowerCase()) ||
-        appliance.Name.toLowerCase().includes(filter.toLowerCase()) ||
-        appliance.lendTo.toLowerCase().includes(filter.toLowerCase()) ||
-        appliance.created.toLowerCase().includes(filter.toLowerCase())
-    );
+    const fetchAppliances = async () => {
+        const token = await getValue('sessionToken');
+        if (token) {
+            try {
+                const response = await fetch(APPLIANCES_ENDPOINT, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'sessionToken': token,
+                    },
+                });
 
-    // Handler to submit new appliance
-    const handleCreateAppliance = () => {
-        setAppliances([...appliances, newAppliance]); // Add the new appliance to the list
-        setModalVisible(false); // Close the modal
-        setNewAppliance({
-            id: String(appliances.length + 2),
-            ownerUsername: '',
-            Name: '',
-            Description: '',
-            timeAvailable: 24,
-            lendTo: 'Anyone',
-            isVisible: true,
-            created: new Date().toISOString(),
-        }); // Reset form data
+                if (response.ok) {
+                    const appliancesData = await response.json();
+                    setAppliances(Object.values(appliancesData)); 
+                    const data = await response.json();
+                    Alert.alert('Error', data.message);
+                }
+            } catch (error) {
+                Alert.alert('Error', 'An error occurred while fetching appliances.');
+                console.error(error);
+            }
+        }
+    };
+
+    useEffect(() => {
+        fetchAppliances();
+        const auth = getAuth();
+        const currentUser = auth.currentUser;
+        if (currentUser && currentUser.email && currentUser.uid) {
+            setMyEmail(currentUser.email);
+            setMyUid(currentUser.uid);
+        }
+    }, []);
+
+    const handleCreateAppliance = async () => {
+        const token = await getValue('sessionToken');
+        setModalVisible(false);
+        if (token && myEmail && myUid) {
+            try {
+                newAppliance.ownerUsername = myEmail;
+                const applianceWithOwnerUid = {
+                    ...newAppliance,
+                    ownerUid: myUid,
+                };
+
+                const response = await fetch(APPLIANCES_ENDPOINT, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'sessionToken': token,
+                    },
+                    body: JSON.stringify(applianceWithOwnerUid),
+                });
+
+                if (response.ok) {
+                    Alert.alert('Success', 'Appliance created successfully.');
+                    setAppliances([...appliances, newAppliance]);
+                    setNewAppliance({
+                        ownerUsername: myEmail,
+                        name: '',
+                        description: '',
+                        timeAvailable: 24,
+                        lendTo: 'Anyone',
+                        isVisible: true,
+                    });
+                } else {
+                    const data = await response.json();
+                    Alert.alert('Error', data.message);
+                }
+            } catch (error) {
+                Alert.alert('Error', 'An error occurred. Please try again.');
+                console.error(error);
+            }
+        }
+    };
+    
+    // Function to filter appliances based on the search input - will not show your own appliances or invisible appliances
+    const getFilteredAppliances = () => {
+        return appliances.filter((appliance) =>
+            appliance.ownerUsername !== myEmail && appliance.isVisible &&
+            (
+                appliance.ownerUsername.toLowerCase().includes(filter.toLowerCase()) ||
+                appliance.name.toLowerCase().includes(filter.toLowerCase()) ||
+                appliance.lendTo.toLowerCase().includes(filter.toLowerCase())
+            )
+        );
     };
 
     return (
@@ -73,40 +132,23 @@ export default function App() {
                 onChangeText={setFilter}
             />
 
-            {/* Appliance List */}
+            {/* Request List */}
             <SafeAreaView style={styles.container}>
-                <ApplianceList data={filteredAppliances} /> {/* Pass filtered appliances to ApplianceList */}
+                <ApplianceList data={getFilteredAppliances()} />
             </SafeAreaView>
 
             {/* Modal for creating a new appliance */}
-            <Modal
-                visible={modalVisible}
-                animationType="slide"
-                onRequestClose={() => setModalVisible(false)}
-            >
+            <Modal visible={modalVisible} animationType="slide" onRequestClose={() => setModalVisible(false)}>
                 <View style={styles.modalContainer}>
                     <Text style={styles.modalTitle}>Add a New Appliance</Text>
-
-                    {/* Owner Username */}
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Owner Username"
-                        placeholderTextColor="#555"
-                        value={newAppliance.ownerUsername}
-                        onChangeText={(text) =>
-                            setNewAppliance({ ...newAppliance, ownerUsername: text })
-                        }
-                    />
 
                     {/* Appliance Name */}
                     <TextInput
                         style={styles.input}
                         placeholder="Appliance Name"
                         placeholderTextColor="#555"
-                        value={newAppliance.Name}
-                        onChangeText={(text) =>
-                            setNewAppliance({ ...newAppliance, Name: text })
-                        }
+                        value={newAppliance.name}
+                        onChangeText={(text) => setNewAppliance({ ...newAppliance, name: text })}
                     />
 
                     {/* Description */}
@@ -114,72 +156,67 @@ export default function App() {
                         style={styles.input}
                         placeholder="Description"
                         placeholderTextColor="#555"
-                        value={newAppliance.Description}
-                        onChangeText={(text) =>
-                            setNewAppliance({ ...newAppliance, Description: text })
-                        }
+                        value={newAppliance.description}
+                        onChangeText={(text) => setNewAppliance({ ...newAppliance, description: text })}
                     />
 
                     {/* Time Available */}
                     <TextInput
                         style={styles.input}
-                        placeholder="Time Available (in hours)"
+                        placeholder="Maximum Lending Duration (in hours)"
                         placeholderTextColor="#555"
                         keyboardType="numeric"
                         value={newAppliance.timeAvailable.toString()}
-                        onChangeText={(text) =>
-                            setNewAppliance({
-                                ...newAppliance,
-                                timeAvailable: parseInt(text) || 0,
-                            })
-                        }
+                        onChangeText={(text) => setNewAppliance({ ...newAppliance, timeAvailable: parseInt(text) || 0 })}
                     />
 
                     {/* Lend To Dropdown */}
                     <DropDownPicker
-                        items={items}
-                        placeholder="Lend To"
-                        value={newAppliance.lendTo}
-                        open={dropdownOpen}
-                        setOpen={setDropdownOpen}
-                        setValue={setValue}
-                        onChangeValue={(value) => {
-                            if (value) {
-                                setNewAppliance({
-                                    ...newAppliance,
-                                    lendTo: value as 'Same Floor' | 'Same Dorm' | 'Anyone',
-                                });
-                            }
+                        items={[
+                            { label: 'Same Floor', value: 'Same Floor' },
+                            { label: 'Same Dorm', value: 'Same Dorm' },
+                            { label: 'Anyone', value: 'Anyone' },
+                        ]}
+                        placeholder="Willing to lend to..."
+                        value={newAppliance.lendTo as 'Same Floor' | 'Same Dorm' | 'Anyone'}
+                        open={lendToDropdownOpen}
+                        setOpen={setLendToDropdownOpen}
+                        setValue={(callback) => {
+                            const selectedValue = callback(newAppliance.lendTo);
+                            setNewAppliance({
+                                ...newAppliance,
+                                lendTo: selectedValue,
+                            });
                         }}
-                        containerStyle={styles.pickerContainer}
+                        containerStyle={[styles.pickerContainer, { zIndex: lendToDropdownOpen ? 10 : 1 }]}
                         style={styles.picker}
                         textStyle={styles.pickerText}
                     />
 
-                    {/* Created Date */}
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Created Date"
-                        placeholderTextColor="#555"
-                        value={newAppliance.created}
-                        onChangeText={(text) =>
-                            setNewAppliance({ ...newAppliance, created: text })
-                        }
-                    />
-
-                    {/* Visibility Toggle */}
-                    <Button
-                        title={`Visibility: ${newAppliance.isVisible ? 'Visible' : 'Hidden'}`}
-                        onPress={() =>
+                    {/* Visibility Preference Dropdown */}
+                    <DropDownPicker
+                        items={[
+                            { label: 'Public', value: true },
+                            { label: 'Private', value: false },
+                        ]}
+                        placeholder="Visibility Preference"
+                        value={newAppliance.isVisible}
+                        open={visibilityDropdownOpen}
+                        setOpen={setVisibilityDropdownOpen}
+                        setValue={(callback) => {
+                            const selectedValue = callback(newAppliance.isVisible);
                             setNewAppliance({
                                 ...newAppliance,
-                                isVisible: !newAppliance.isVisible,
-                            })
-                        }
+                                isVisible: selectedValue,
+                            });
+                        }}
+                        containerStyle={[styles.pickerContainer, { zIndex: visibilityDropdownOpen ? 10 : 1 }]}
+                        style={styles.picker}
+                        textStyle={styles.pickerText}
                     />
 
                     {/* Submit Button */}
-                    <Button title="Add Appliance" onPress={handleCreateAppliance} />
+                    <Button title="List Appliance" onPress={handleCreateAppliance} />
 
                     {/* Close Button */}
                     <Button title="Cancel" onPress={() => setModalVisible(false)} />
@@ -245,3 +282,4 @@ const styles = StyleSheet.create({
         color: '#555',
     },
 });
+
