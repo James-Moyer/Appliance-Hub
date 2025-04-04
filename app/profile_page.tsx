@@ -12,6 +12,7 @@ import {
 import { saveInStore, removeFromStore } from '../helpers/keyfetch'; // local storage helpers
 import { useRouter } from 'expo-router';
 import { SessionContext } from '@/helpers/sessionContext';
+import { USERS_ENDPOINT } from '../constants/constants';
 
 interface UserData {
   username?: string;
@@ -68,8 +69,9 @@ const ProfilePage: React.FC = () => {
   const getResponse = async () => {
     // console.log("Loading profile page, requesting user info");
     // console.log("Token: ", sessionContext.sessionToken);
+    const uid = sessionContext.UID;
     if (sessionContext?.UID) {
-      const response = await fetch('http://localhost:3000/user/'+sessionContext.UID, { // If running on an emulator, use 'http://{ip_address}:3000/request'
+      const response = await fetch(`${USERS_ENDPOINT}/byuid/${uid}`, { // If running on an emulator, use 'http://{ip_address}:3000/request'
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
@@ -115,7 +117,7 @@ const ProfilePage: React.FC = () => {
       };
 
       
-      const response = await fetch(`http://localhost:3000/user/byuid/${uid}`, {
+      const response = await fetch(`${USERS_ENDPOINT}/byuid/${uid}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

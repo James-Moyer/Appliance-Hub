@@ -184,7 +184,7 @@ export default function App() {
                         open={lendToDropdownOpen}
                         setOpen={setLendToDropdownOpen}
                         setValue={(callback) => {
-                            const selectedValue = callback(newAppliance.lendTo as 'Same Floor' | 'Same Dorm' | 'Anyone');
+                            const selectedValue = callback(newAppliance.lendTo);
                             setNewAppliance({
                                 ...newAppliance,
                                 lendTo: selectedValue,
