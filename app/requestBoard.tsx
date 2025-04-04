@@ -1,21 +1,34 @@
-import React, { useState, useContext } from 'react';
-import { SafeAreaView, StyleSheet, Text, TextInput, View, Button, Modal, Alert } from 'react-native';
+import React, { useState, useEffect, useContext } from 'react';
+import {
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+  Button,
+  Modal,
+  Alert,
+  TouchableOpacity
+} from 'react-native';
+// import { getAuth } from 'firebase/auth';
 import DropDownPicker from 'react-native-dropdown-picker';
-import { getAuth } from "firebase/auth";
-import RequestList from '../components/RequestList';
 import { Request } from '../types/types';
 import { useRouter } from 'expo-router';
 import { getFromStore } from '../helpers/keyfetch';
 import { REQUESTS_ENDPOINT } from '../constants/constants';
 import { SessionContext } from '@/helpers/sessionContext';
 
-export default function App() {
+export default function RequestBoard() {
     const router = useRouter();
 
+    const [filter, setFilter] = useState('');
+    const [requests, setRequests] = useState<Request[]>([]);
     const {sessionContext} = useContext(SessionContext);
 
     const myEmail = sessionContext.email;
     
+    // For creating a new request:
+    const [modalVisible, setModalVisible] = useState(false);
     const [newRequest, setNewRequest] = useState<Request>({
         requesterEmail: myEmail,
         applianceName: '',
@@ -24,13 +37,8 @@ export default function App() {
         requestDuration: 60,
     });
 
+    // For the two dropdown pickers:
 
-    // State to hold the filter text and requests
-    const [filter, setFilter] = useState('');
-    const [requests, setRequests] = useState<Request[]>([]); // Initialize with an empty array
-
-    // State for modal visibility and form data
-    const [modalVisible, setModalVisible] = useState(false);
     const [collateralPickerOpen, setCollateralPickerOpen] = useState(false);
     const [durationPickerOpen, setDurationPickerOpen] = useState(false);
 
@@ -38,12 +46,23 @@ export default function App() {
     const [requestsFetched, setFetched] = useState(false);
 
 
+  // Filter logic- How are these two implementations different?
+    // From Marwan_update6
     const getFilteredRequests = () => {
-        return requests.filter((request) =>
-            request.applianceName.toLowerCase().includes(filter.toLowerCase()) ||
-            request.requesterEmail.toLowerCase().includes(filter.toLowerCase())
-        );
-    };
+        return requests.filter(
+        (r) =>
+            r.applianceName.toLowerCase().includes(filter.toLowerCase()) ||
+            r.requesterEmail.toLowerCase().includes(filter.toLowerCase())
+        )
+    }
+
+    // From main as of 3/31 or so
+    // const getFilteredRequests = () => {
+    //     return requests.filter((request) =>
+    //         request.applianceName.toLowerCase().includes(filter.toLowerCase()) ||
+    //         request.requesterEmail.toLowerCase().includes(filter.toLowerCase())
+    //     );
+    // };
     
     const fetchRequests = async () => {
         const token = sessionContext.token;
@@ -102,7 +121,7 @@ export default function App() {
                     });
 
                     if (response.ok) {
-                        console.log("got back ok!");
+                        // console.log("got back ok!");
                         Alert.alert('Success', 'Request created successfully.');
                         setRequests([...requests, newRequest]); // Add the new request to the list
                         
@@ -141,173 +160,216 @@ export default function App() {
         }
     });
 
-    return (
-        <View style={styles.container}>
-            <Text style={styles.name}>Requests</Text>
 
-            {/* Button to open modal */}
-            <Button title="Create Request" onPress={() => setModalVisible(true)} />
+  return (
+    <View style={styles.container}>
+      <Text style={styles.headerText}>Requests</Text>
 
-            {/* Search Bar */}
-            <TextInput
-                style={styles.searchBar}
-                placeholder="Search by appliance or owner..."
-                placeholderTextColor="#555"
-                value={filter}
-                onChangeText={setFilter}
-            />
+      <Button title="Create Request" onPress={() => setModalVisible(true)} />
 
-            <Button title="Refresh" onPress={fetchRequests} />
+      {/* Filter / Search bar */}
+      <TextInput
+        style={styles.searchBar}
+        placeholder="Search by appliance or owner..."
+        placeholderTextColor="#555"
+        value={filter}
+        onChangeText={setFilter}
+      />
 
-            {/* Request List */}
-            <SafeAreaView style={styles.container}>
-                <RequestList data={getFilteredRequests()} />
-            </SafeAreaView>
+      <Button title="Refresh" onPress={fetchRequests} />
 
-            {/* Modal for creating a request */}
-            <Modal
-                visible={modalVisible}
-                animationType="slide"
-                onRequestClose={() => setModalVisible(false)}
+      {/* Inline list of requests */}
+      <SafeAreaView style={{ flex: 1, width: '100%' }}>
+        {getFilteredRequests().map((item, idx) => (
+          <View key={idx} style={styles.requestCard}>
+            <Text style={styles.title}>{item.applianceName}</Text>
+
+            {/* Make the Owner field clickable */}
+            <TouchableOpacity
+              onPress={() => {
+                // Navigate to the public profile, passing ?email=...
+                router.push(
+                  `/public_profile?email=${encodeURIComponent(item.requesterEmail)}`
+                );
+              }}
             >
-                <View style={styles.modalContainer}>
-                    <Text style={styles.modalTitle}>Create a New Request</Text>
+              <Text style={styles.ownerText}>
+                Owner: {item.requesterEmail}
+              </Text>
+            </TouchableOpacity>
 
-                    {/* Appliance Name */}
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Appliance Name"
-                        placeholderTextColor="#555"
-                        value={newRequest.applianceName}
-                        onChangeText={(text) => setNewRequest({ ...newRequest, applianceName: text })}
-                    />
+            <Text>Status: {item.status}</Text>
+            <Text>Collateral: {item.collateral ? 'Yes' : 'No'}</Text>
+            <Text>Request Duration: {item.requestDuration as number} hours</Text>
+          </View>
+        ))}
+      </SafeAreaView>
 
-                    {/* Collateral (true/false) */}
-                    <View style={[styles.inputContainer, collateralPickerOpen ? { zIndex: 2 } : { zIndex: 1 }]}>
-                        <Text style={styles.label}>Collateral:</Text>
-                        <DropDownPicker
-                            open={collateralPickerOpen}
-                            setOpen={setCollateralPickerOpen}
-                            value={newRequest.collateral} // Set the current value
-                            setValue={(callback) => {
-                                const selectedValue = callback(newRequest.collateral);
-                                setNewRequest({
-                                    ...newRequest,
-                                    collateral: selectedValue,
-                                });
-                            }}
-                            items={[
-                                { label: 'Yes', value: true },
-                                { label: 'No', value: false },
-                            ]}
-                            style={styles.picker}
-                            textStyle={styles.pickerText}
-                            containerStyle={styles.pickerContainer}
-                        />
-                    </View>
+      {/* Modal to create a request */}
+      <Modal
+        visible={modalVisible}
+        animationType="slide"
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <Text style={styles.modalTitle}>Create a New Request</Text>
 
-                    {/* Request Duration (in hours) */}
-                    <View style={[styles.inputContainer, durationPickerOpen ? { zIndex: 2 } : { zIndex: 1 }]}>
-                        <Text style={styles.label}>Request Duration (in hours):</Text>
-                        <DropDownPicker
-                            open={durationPickerOpen}
-                            setOpen={setDurationPickerOpen}
-                            value={newRequest.requestDuration as number} // Ensure the value is a primitive number
-                            setValue={(callback) => {
-                                const selectedValue = callback(newRequest.requestDuration);
-                                setNewRequest({
-                                    ...newRequest,
-                                    requestDuration: selectedValue,
-                                });
-                            }}
-                            items={[
-                                { label: '4 hours', value: 4 },
-                                { label: '8 hours', value: 8 },
-                                { label: '12 hours', value: 12 },
-                                { label: '24 hours', value: 24 },
-                                { label: '48 hours', value: 48 },
-                            ]}
-                            style={styles.picker}
-                            textStyle={styles.pickerText}
-                            containerStyle={styles.pickerContainer}
-                        />
-                    </View>
+          <TextInput
+            style={styles.input}
+            placeholder="Appliance Name"
+            placeholderTextColor="#555"
+            value={newRequest.applianceName}
+            onChangeText={(txt) =>
+              setNewRequest({ ...newRequest, applianceName: txt })
+            }
+          />
 
-                    {/* Submit Button */}
-                    <Button title="Submit Request" onPress={handleCreateRequest} />
+          {/* Collateral dropdown */}
+          <View
+            style={[
+              styles.inputContainer,
+              collateralPickerOpen ? { zIndex: 2 } : { zIndex: 1 }
+            ]}
+          >
+            <Text style={styles.label}>Collateral:</Text>
+            <DropDownPicker
+              open={collateralPickerOpen}
+              setOpen={setCollateralPickerOpen}
+              value={newRequest.collateral}
+              setValue={(callback) => {
+                const selectedValue = callback(newRequest.collateral);
+                setNewRequest({ ...newRequest, collateral: selectedValue });
+              }}
+              items={[
+                { label: 'Yes', value: true },
+                { label: 'No', value: false }
+              ]}
+              style={styles.picker}
+              textStyle={styles.pickerText}
+              containerStyle={styles.pickerContainer}
+            />
+          </View>
 
-                    {/* Close Button */}
-                    <Button title="Cancel" onPress={() => setModalVisible(false)} />
-                </View>
-            </Modal>
-        </View>
+            {/* Request Duration dropdown */}
+            <View
+              style={[
+                styles.inputContainer,
+                durationPickerOpen ? { zIndex: 2 } : { zIndex: 1 }
+              ]}
+            >
+              <Text style={styles.label}>Request Duration (hours):</Text>
+              <DropDownPicker
+                open={durationPickerOpen}
+                setOpen={setDurationPickerOpen}
+                value={newRequest.requestDuration as number}
+                setValue={(callback) => {
+                  const selectedValue = callback(newRequest.requestDuration);
+                  setNewRequest({
+                    ...newRequest,
+                    requestDuration: selectedValue
+                  });
+                }}
+                items={[
+                  { label: '4 hours', value: 4 },
+                  { label: '8 hours', value: 8 },
+                  { label: '12 hours', value: 12 },
+                  { label: '24 hours', value: 24 },
+                  { label: '48 hours', value: 48 }
+                ]}
+                style={styles.picker}
+                textStyle={styles.pickerText}
+                containerStyle={styles.pickerContainer}
+              />
+            </View>
+            <Button title="Submit Request" onPress={handleCreateRequest} />
+            <Button title="Cancel" onPress={() => setModalVisible(false)} />
+          </View>
+      </Modal>
+    </View>
     );
 }
 
+// Styles
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#fff',
-        alignItems: 'center',
-        justifyContent: 'flex-start',
-    },
-    inputContainer: {
-        width: '90%',
-        marginBottom: 10,
-    },
-    label: {
-        fontSize: 16,
-        marginBottom: 5,
-        color: '#333',
-    },
-    name: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        marginBottom: 10,
-        marginTop: 10,
-    },
-    searchBar: {
-        height: 40,
-        width: '90%',
-        borderColor: '#ccc',
-        borderWidth: 1,
-        borderRadius: 5,
-        marginBottom: 10,
-        marginTop: 10,
-        paddingLeft: 10,
-    },
-    modalContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'white',
-        padding: 20,
-    },
-    modalTitle: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        marginBottom: 20,
-    },
-    input: {
-        height: 40,
-        width: '90%',
-        borderColor: '#ccc',
-        borderWidth: 1,
-        borderRadius: 5,
-        marginBottom: 10,
-        paddingLeft: 10,
-    },
-    pickerContainer: {
-        width: '90%',
-        marginBottom: 10,
-    },
-    picker: {
-        borderColor: '#ccc',
-        borderWidth: 1,
-        borderRadius: 5,
-    },
-    pickerText: {
-        color: '#555',
-    },
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+    alignItems: 'center'
+  },
+  headerText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginTop: 10,
+    marginBottom: 10
+  },
+  searchBar: {
+    height: 40,
+    width: '90%',
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 5,
+    marginBottom: 10,
+    paddingLeft: 10
+  },
+  requestCard: {
+    backgroundColor: '#f7f7f7',
+    padding: 15,
+    marginBottom: 10,
+    borderRadius: 6,
+    alignSelf: 'center',
+    width: '90%'
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 4
+  },
+  ownerText: {
+    color: 'blue',
+    textDecorationLine: 'underline',
+    marginBottom: 4,
+    fontSize: 16
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    padding: 20
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 20
+  },
+  inputContainer: {
+    width: '90%',
+    marginBottom: 10
+  },
+  label: {
+    fontSize: 16,
+    marginBottom: 5,
+    color: '#333'
+  },
+  input: {
+    height: 40,
+    width: '90%',
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 5,
+    marginBottom: 10,
+    paddingLeft: 10
+  },
+  pickerContainer: {
+    width: '90%',
+    marginBottom: 10
+  },
+  picker: {
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 5
+  },
+  pickerText: {
+    color: '#555'
+  }
 });
-
