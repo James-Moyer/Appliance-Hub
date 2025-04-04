@@ -31,6 +31,7 @@ const ProfilePage: React.FC = () => {
   const [user, setUser] = useState<UserData>({});
   const [loading, setLoading] = useState<boolean>(false);
   const [editing, setEditing] = useState<boolean>(false);
+  const [infoFetched, setFetched] = useState(false);
 
   // Local state for edits
   const [editedUsername, setEditedUsername] = useState('');
@@ -50,11 +51,13 @@ const ProfilePage: React.FC = () => {
     }
 
     setContext({
-      isLoggedIn : "",
+      isLoggedIn : "false",
       UID : "",
       email : "",
       token : "",
     });
+    
+    setFetched(false);
     // console.log("logged out");
   };
 
@@ -65,30 +68,34 @@ const ProfilePage: React.FC = () => {
   const getResponse = async () => {
     // console.log("Loading profile page, requesting user info");
     // console.log("Token: ", sessionContext.sessionToken);
-    
-    const response = await fetch('http://localhost:3000/user/'+sessionContext?.UID, { // If running on an emulator, use 'http://{ip_address}:3000/request'
-      method: 'GET',
-      headers: {
-          'Content-Type': 'application/json',
-          'sessionToken': sessionContext.sessionToken,
-      }
-    });
+    if (sessionContext?.UID) {
+      const response = await fetch('http://localhost:3000/user/'+sessionContext.UID, { // If running on an emulator, use 'http://{ip_address}:3000/request'
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'sessionToken': sessionContext.token,
+        }
+      });
 
-    if (response.ok) {
+      if (response.ok) {
         const returnedData = await response.json();
         console.log("Returned data: ", returnedData);
         setUser(returnedData);
+        setFetched(true);
         // set initial edits
         setEditedUsername(returnedData.username || '');
         setEditedLocation(returnedData.location || '');
         setEditedFloor(returnedData.floor?.toString() || '');
+      } else {
+        // If info not returned
+        const errMsg = await response.json();
+        Alert.alert('Error fetching user', errMsg?.message || 'Unknown error');
+        console.log("Response no good!");
+      }
     } else {
-      // If info not returned
-      const errMsg = await response.json();
-      Alert.alert('Error fetching user', errMsg?.message || 'Unknown error');
-      console.log("Response no good!");
+      return null;
     }
-  }
+  };
 
   const handleSave = async () => {
     try {
@@ -138,8 +145,8 @@ const ProfilePage: React.FC = () => {
     }
     // console.log("Session in profile page: ", sessionContext);
     // console.log("user: ", user);
-    if (!user.created) { // Just check to see if values have been populated yet
-      // console.log("user data not yet fetched, grabbing it now");
+    if (!infoFetched) { // Just check to see if values have been populated yet
+      console.log("user data not yet fetched, grabbing it now");
       getResponse();
     }
     });
@@ -220,14 +227,14 @@ const ProfilePage: React.FC = () => {
           </TouchableOpacity>
         </View>
       ) : (
-        <TouchableOpacity
+        infoFetched ? <TouchableOpacity
           style={[styles.button, { backgroundColor: '#007bff', marginTop: 20 }]}
           onPress={handleEditToggle}
         >
           <Text style={styles.buttonText}>Edit Profile</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> : null
       )}
-      {user.created ? <TouchableOpacity style={styles.logout} onPress={logout}>
+      {infoFetched ? <TouchableOpacity style={styles.logout} onPress={logout}>
         <Text>Log Out</Text>
       </TouchableOpacity> : null}
     </View>
