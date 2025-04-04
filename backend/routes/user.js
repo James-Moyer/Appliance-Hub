@@ -12,11 +12,11 @@ router.get('/byemail/:email', UserController.getUserByEmail);
 // GET all users
 router.get('/', UserController.getAllUsers);
 
-// GET a certain user by username
-router.get('/:username', UserController.getUser);
+// Get a certain user
+router.get('/:uid', UserController.getUser);
 
-// UPDATE a user by username
-router.put('/:username', UserController.updateUser);
+// Update a user
+router.put('/:uid', UserController.updateUser);
 
 // DELETE a user by UID
 router.delete('/:uid', UserController.deleteUser);

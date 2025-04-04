@@ -78,72 +78,62 @@ const UserController = {
         }
       }
 
-      res.status(200).json(users);
-    } catch (err) {
-      res.status(500).json({ message: err.message });
-    }
-  },
+            res.status(200).json(users);
+        } catch (err) {
+            res.status(500).json({ message: err.message });
+        }
+    },
 
-  
-  getUser: async (req, res) => {
+    getUser: async (req, res) => {
+        /*
+        Expects req body to contain json object w/ uid field and headr to have sessionToken field
+        */
+        const target = req.params.uid;
+        const token = req.get("sessionToken");
+        let applyPrivacyPrefs = false;
+
+        const verifiedUser = await verifyLogin(token);
+
+        if (verifiedUser.errorCode) { // If rejected, lots of error codes so this could be expanded to handle more cases
+            return res.status(400).json({
+              code: verifiedUser.errorCode,
+              message: verifiedUser.message});
+        } else { // Successful case
+            if (target != verifiedUser.uid) { // Data will be restricted if viewing someone else's data
+                applyPrivacyPrefs = true;
+            }
+        };
+
+        try {
+            const ref = db.ref('users/' + username);
+            const snapshot = await ref.once('value'); // Filter this based on requesting user
+
+            if (!snapshot.exists()) {
+                return res.status(404).json({ message: 'No user found with specified username' });
+            }
+
+            const user = snapshot.val();
+
+            if (applyPrivacyPrefs) { // Applying privacy settings
+                if (!user.showDorm) {
+                    delete user.location;
+                }
+                if (!user.showFloor) {
+                    delete user.floor;
+                }
+            }
+
+            res.status(200).json(user);
+
+        } catch (err) {
+            res.status(500).json({ message: err.message });
+        }
+    },
     
-    const username = req.params.username; 
-    const token = req.get('sessionToken');
-    let applyPrivacyPrefs = false;
-
-    const verifiedUser = await verifyLogin(token);
-    if (verifiedUser.errorCode) {
-      return res.status(400).json({
-        code: verifiedUser.errorCode,
-        message: verifiedUser.message,
-      });
-    }
-
-    try {
-      const snapshot = await db.ref('users').once('value');
-      if (!snapshot.exists()) {
-        return res.status(404).json({ message: 'No users in DB' });
-      }
-
-      const allUsers = snapshot.val();
-      let foundUser = null;
-      for (const uidKey in allUsers) {
-        if (allUsers[uidKey].username === username) {
-          foundUser = allUsers[uidKey];
-          // check privacy
-          if (verifiedUser.uid !== uidKey) {
-            applyPrivacyPrefs = true;
-          }
-          break;
-        }
-      }
-
-      if (!foundUser) {
-        return res
-          .status(404)
-          .json({ message: 'No user found with specified username' });
-      }
-
-      if (applyPrivacyPrefs) {
-        if (!foundUser.showDorm) {
-          delete foundUser.location;
-        }
-        if (!foundUser.showFloor) {
-          delete foundUser.floor;
-        }
-      }
-
-      return res.status(200).json(foundUser);
-    } catch (err) {
-      return res.status(500).json({ message: err.message });
-    }
-  },
-
-
-  updateUser: async (req, res) => {
-    const username = req.params.username;
-    const updates = req.body;
-    const token = req.get('sessionToken');
+    updateUser: async (req, res) => {
+        const target = req.params.uid;
+        const updates = req.body;
+        const token = req.get("sessionToken");
 
     const verifiedUser = await verifyLogin(token);
     if (verifiedUser.errorCode) {

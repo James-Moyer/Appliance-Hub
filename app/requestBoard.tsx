@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import {
   SafeAreaView,
   StyleSheet,
@@ -10,136 +10,157 @@ import {
   Alert,
   TouchableOpacity
 } from 'react-native';
-import { getAuth } from 'firebase/auth';
+// import { getAuth } from 'firebase/auth';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { Request } from '../types/types';
 import { useRouter } from 'expo-router';
-import { getValue } from '../helpers/keyfetch';
+import { getFromStore } from '../helpers/keyfetch';
 import { REQUESTS_ENDPOINT } from '../constants/constants';
+import { SessionContext } from '@/helpers/sessionContext';
 
 export default function RequestBoard() {
-  const router = useRouter();
+    const router = useRouter();
 
-  const [myEmail, setMyEmail] = useState('');
-  const [filter, setFilter] = useState('');
-  const [requests, setRequests] = useState<Request[]>([]);
 
-  // For creating a new request:
-  const [modalVisible, setModalVisible] = useState(false);
-  const [newRequest, setNewRequest] = useState<Request>({
-    requesterEmail: '',
-    applianceName: '',
-    status: 'open',
-    collateral: false,
-    requestDuration: 60
-  });
+    const [filter, setFilter] = useState('');
+    const [requests, setRequests] = useState<Request[]>([]);
+    const {sessionContext} = useContext(SessionContext);
 
-  // For the two dropdown pickers:
-  const [collateralPickerOpen, setCollateralPickerOpen] = useState(false);
-  const [durationPickerOpen, setDurationPickerOpen] = useState(false);
+    const myEmail = sessionContext.email;
+    
+    // For creating a new request:
+    const [modalVisible, setModalVisible] = useState(false);
+    const [newRequest, setNewRequest] = useState<Request>({
+        requesterEmail: myEmail,
+        applianceName: '',
+        status: 'open', // Default status to 'Open'
+        collateral: false,
+        requestDuration: 60,
+    });
 
-  // Fetch the requests from backend
-  const fetchRequests = async () => {
-    const token = await getValue('sessionToken');
-    if (!token) return;
+    // For the two dropdown pickers:
 
-    try {
-      const response = await fetch(REQUESTS_ENDPOINT, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'sessionToken': token
+    const [collateralPickerOpen, setCollateralPickerOpen] = useState(false);
+    const [durationPickerOpen, setDurationPickerOpen] = useState(false);
+
+    // State so we don't send too many requests- users can use the refresh button
+    const [requestsFetched, setFetched] = useState(false);
+
+
+  // Filter logic- How are these two implementations different?
+    // From Marwan_update6
+    const getFilteredRequests = () => {
+        return requests.filter(
+        (r) =>
+            r.applianceName.toLowerCase().includes(filter.toLowerCase()) ||
+            r.requesterEmail.toLowerCase().includes(filter.toLowerCase())
+        )
+    }
+
+    // From main as of 3/31 or so
+    // const getFilteredRequests = () => {
+    //     return requests.filter((request) =>
+    //         request.applianceName.toLowerCase().includes(filter.toLowerCase()) ||
+    //         request.requesterEmail.toLowerCase().includes(filter.toLowerCase())
+    //     );
+    // };
+    
+    const fetchRequests = async () => {
+        const token = sessionContext.token;
+        console.log("fetching requests...");
+        if (token) {
+            try {
+                const response = await fetch(REQUESTS_ENDPOINT, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'sessionToken': String(token),
+                    },
+                });
+    
+                if (response.ok) {
+                    console.log("fetched requests ok");
+                    const all_requests = await response.json();
+                    const requestsArray = Object.values(all_requests) as Request[];
+                    setRequests(requestsArray); // Set the fetched requests
+                    setFetched(true);
+                } else {
+                    const data = await response.json();
+                    Alert.alert('Error', data.message);
+                    console.log("Error fetching: ", data);
+                }
+            } catch (error) {
+                Alert.alert('Error', 'An error occurred while fetching requests.');
+                console.error(error);
+            }
         }
-      });
+    };
+    
+    // Handler to submit new request
+    const handleCreateRequest = async () => {
+        const token = sessionContext.token;
+        console.log("Creating a request");
+        setModalVisible(false); // Close the modal
+        if (token) {
+            try {
+                if (myEmail != null) {
+                    // newRequest.requesterEmail = myEmail; // Set the requester email to the current user's email
+                    // Validate all required fields before sending
+                    if (!newRequest.requesterEmail || !newRequest.applianceName || !newRequest.requestDuration || !newRequest.status) {
+                        Alert.alert('Error', 'Please fill out all required fields');
+                        console.log("Not enough data entered: ", newRequest);
+                        return;
+                    }
 
-      if (response.ok) {
-        const allData = await response.json();
-        const requestsArray = Object.values(allData) as Request[];
-        setRequests(requestsArray);
-      } else {
-        const data = await response.json();
-        Alert.alert('Error', data.message);
-      }
-    } catch (error) {
-      Alert.alert('Error', 'An error occurred while fetching requests.');
-      console.error(error);
-    }
-  };
+                    const response = await fetch(REQUESTS_ENDPOINT, {
+                        method: 'POST',
+                        headers: new Headers({
+                            "Content-Type" : "application/json",
+                            "sessionToken" : String(token)
+                        }),
+                        body: JSON.stringify(newRequest),
+                    });
 
-  // On first render, fetch requests & set myEmail
-  useEffect(() => {
-    fetchRequests();
-    const auth = getAuth();
-    const currentUser = auth.currentUser;
-    if (currentUser && currentUser.email) {
-      setMyEmail(currentUser.email);
-    }
-  }, []);
+                    if (response.ok) {
+                        // console.log("got back ok!");
+                        Alert.alert('Success', 'Request created successfully.');
+                        setRequests([...requests, newRequest]); // Add the new request to the list
+                        
+                        // Reset form data
+                        setNewRequest({
+                            requesterEmail: newRequest.requesterEmail,
+                            applianceName: '',
+                            status: 'open', // Reset status to 'Open'
+                            collateral: newRequest.collateral,
+                            requestDuration: newRequest.requestDuration,
+                        });
+                    } else {
+                        const data = await response.json();
+                        Alert.alert('Error', data.message);
+                        console.log("Error: ", data);
+                        return;
+                    }
+                }
+            } catch (error) {
+                Alert.alert('Error', 'An error occurred. Please try again.');
+                console.error(error);
+            }
+        } else {
+            console.log("no token!", sessionContext);
+        }
+    };
 
-  // Filter logic
-  const getFilteredRequests = () => {
-    return requests.filter(
-      (r) =>
-        r.applianceName.toLowerCase().includes(filter.toLowerCase()) ||
-        r.requesterEmail.toLowerCase().includes(filter.toLowerCase())
-    );
-  };
+    // Fetch requests when the component loads
+    React.useEffect(() => {
+        // console.log("Session when useEffecting requestboard: ", sessionContext);
+        if (sessionContext.isLoggedIn != "true") {
+            router.push("/" as any); // Redirect to login page if not signed in
+        }
+        if (!requestsFetched) {
+            fetchRequests();
+        }
+    });
 
-  // Create a new request
-  const handleCreateRequest = async () => {
-    setModalVisible(false);
-    const token = await getValue('sessionToken');
-    if (!token) return;
-
-    try {
-      if (!myEmail) return;
-
-      // Fill in the current user’s email for the new request
-      newRequest.requesterEmail = myEmail;
-
-      // Validate
-      if (
-        !newRequest.requesterEmail ||
-        !newRequest.applianceName ||
-        !newRequest.requestDuration ||
-        !newRequest.status
-      ) {
-        Alert.alert('Error', 'Please fill out all required fields');
-        return;
-      }
-
-      // POST to backend
-      const response = await fetch(REQUESTS_ENDPOINT, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'sessionToken': token
-        },
-        body: JSON.stringify(newRequest)
-      });
-
-      if (response.ok) {
-        Alert.alert('Success', 'Request created successfully.');
-        // Add new request to local list
-        setRequests([...requests, newRequest]);
-
-        // Reset form
-        setNewRequest({
-          requesterEmail: myEmail,
-          applianceName: '',
-          status: 'open',
-          collateral: false,
-          requestDuration: 60
-        });
-      } else {
-        const data = await response.json();
-        Alert.alert('Error', data.message);
-      }
-    } catch (error) {
-      Alert.alert('Error', 'An error occurred. Please try again.');
-      console.error(error);
-    }
-  };
 
   return (
     <View style={styles.container}>
@@ -230,44 +251,43 @@ export default function RequestBoard() {
             />
           </View>
 
-          {/* Request Duration dropdown */}
-          <View
-            style={[
-              styles.inputContainer,
-              durationPickerOpen ? { zIndex: 2 } : { zIndex: 1 }
-            ]}
-          >
-            <Text style={styles.label}>Request Duration (hours):</Text>
-            <DropDownPicker
-              open={durationPickerOpen}
-              setOpen={setDurationPickerOpen}
-              value={newRequest.requestDuration as number}
-              setValue={(callback) => {
-                const selectedValue = callback(newRequest.requestDuration);
-                setNewRequest({
-                  ...newRequest,
-                  requestDuration: selectedValue
-                });
-              }}
-              items={[
-                { label: '4 hours', value: 4 },
-                { label: '8 hours', value: 8 },
-                { label: '12 hours', value: 12 },
-                { label: '24 hours', value: 24 },
-                { label: '48 hours', value: 48 }
+            {/* Request Duration dropdown */}
+            <View
+              style={[
+                styles.inputContainer,
+                durationPickerOpen ? { zIndex: 2 } : { zIndex: 1 }
               ]}
-              style={styles.picker}
-              textStyle={styles.pickerText}
-              containerStyle={styles.pickerContainer}
-            />
+            >
+              <Text style={styles.label}>Request Duration (hours):</Text>
+              <DropDownPicker
+                open={durationPickerOpen}
+                setOpen={setDurationPickerOpen}
+                value={newRequest.requestDuration as number}
+                setValue={(callback) => {
+                  const selectedValue = callback(newRequest.requestDuration);
+                  setNewRequest({
+                    ...newRequest,
+                    requestDuration: selectedValue
+                  });
+                }}
+                items={[
+                  { label: '4 hours', value: 4 },
+                  { label: '8 hours', value: 8 },
+                  { label: '12 hours', value: 12 },
+                  { label: '24 hours', value: 24 },
+                  { label: '48 hours', value: 48 }
+                ]}
+                style={styles.picker}
+                textStyle={styles.pickerText}
+                containerStyle={styles.pickerContainer}
+              />
+            </View>
+            <Button title="Submit Request" onPress={handleCreateRequest} />
+            <Button title="Cancel" onPress={() => setModalVisible(false)} />
           </View>
-
-          <Button title="Submit Request" onPress={handleCreateRequest} />
-          <Button title="Cancel" onPress={() => setModalVisible(false)} />
-        </View>
       </Modal>
     </View>
-  );
+    );
 }
 
 // Styles

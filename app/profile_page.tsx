@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import {
   View,
   Text,
@@ -9,7 +9,9 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
-import { getValue } from '../helpers/keyfetch'; // local storage helpers
+import { saveInStore, removeFromStore } from '../helpers/keyfetch'; // local storage helpers
+import { useRouter } from 'expo-router';
+import { SessionContext } from '@/helpers/sessionContext';
 
 interface UserData {
   username?: string;
@@ -22,6 +24,10 @@ interface UserData {
 }
 
 const ProfilePage: React.FC = () => {
+  const router = useRouter();
+
+  const { sessionContext, setContext }  = useContext(SessionContext);
+
   const [user, setUser] = useState<UserData>({});
   const [loading, setLoading] = useState<boolean>(true);
   const [editing, setEditing] = useState<boolean>(false);
@@ -31,56 +37,65 @@ const ProfilePage: React.FC = () => {
   const [editedLocation, setEditedLocation] = useState('');
   const [editedFloor, setEditedFloor] = useState('');
 
-  // On mount, fetch user data
-  useEffect(() => {
-    (async () => {
-      try {
-        const uid = await getValue('UID');
-        const token = await getValue('sessionToken');
 
-        if (!uid || !token) {
-          Alert.alert('Not logged in', 'Please log in first.');
-          setLoading(false);
-          return;
-        }
+  
+  const logout = async() => {
+    // console.log("logging out..");
+    let res1 = await removeFromStore("sessionToken");
+    let res2 = await removeFromStore("UID");
+    
+    if (!res1){
+      saveInStore("sessionToken", "");
+    }
+    if (!res2) {
+      saveInStore("UID", "");
+    }
 
-        
-        const response = await fetch(`http://localhost:3000/user/byuid/${uid}`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'sessionToken': token,
-          },
-        });
-
-        if (!response.ok) {
-          const errMsg = await response.json();
-          Alert.alert('Error fetching user', errMsg?.message || 'Unknown error');
-        } else {
-          const userData = await response.json();
-          setUser(userData);
-
-          // set initial edits
-          setEditedUsername(userData.username || '');
-          setEditedLocation(userData.location || '');
-          setEditedFloor(userData.floor?.toString() || '');
-        }
-      } catch (error: any) {
-        Alert.alert('Fetch Error', error.message);
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, []);
+    setContext({
+      isLoggedIn : "",
+      UID : "",
+      email : "",
+      token : "",
+    });
+    // console.log("logged out");
+  };
 
   const handleEditToggle = () => {
     setEditing(!editing);
   };
 
+  const getResponse = async () => {
+    // console.log("Loading profile page, requesting user info");
+    // console.log("Token: ", sessionContext.sessionToken);
+    
+    const response = await fetch('http://localhost:3000/user/'+sessionContext?.UID, { // If running on an emulator, use 'http://{ip_address}:3000/request'
+      method: 'GET',
+      headers: {
+          'Content-Type': 'application/json',
+          'sessionToken': sessionContext.sessionToken,
+      }
+    });
+
+    if (response.ok) {
+        const returnedData = await response.json();
+        // console.log("Returned data: ", returnedData);
+        setUser(returnedData);
+        // set initial edits
+        setEditedUsername(returnedData.username || '');
+        setEditedLocation(returnedData.location || '');
+        setEditedFloor(returnedData.floor?.toString() || '');
+    } else {
+      // If info not returned
+      const errMsg = await response.json();
+      Alert.alert('Error fetching user', errMsg?.message || 'Unknown error');
+      console.log("Response no good!");
+    }
+  }
+
   const handleSave = async () => {
     try {
-      const uid = await getValue('UID');
-      const token = await getValue('sessionToken');
+      const uid = sessionContext.UID;
+      const token = sessionContext.token;
 
       if (!uid || !token) {
         Alert.alert('Not logged in', 'Please log in first.');
@@ -117,6 +132,19 @@ const ProfilePage: React.FC = () => {
       Alert.alert('Update Error', error.message);
     }
   };
+
+  React.useEffect(() => {
+    // console.log("Session when useEffecting profile page: ", sessionContext);
+    if (sessionContext.isLoggedIn != "true") {
+      router.push("/" as any); // Redirect to login page if not signed in
+    }
+    // console.log("Session in profile page: ", sessionContext);
+    // console.log("user: ", user);
+    if (!user.created) { // Just check to see if values have been populated yet
+      // console.log("user data not yet fetched, grabbing it now");
+      getResponse();
+    }
+    });
 
   if (loading) {
     return (
@@ -201,6 +229,13 @@ const ProfilePage: React.FC = () => {
           <Text style={styles.buttonText}>Edit Profile</Text>
         </TouchableOpacity>
       )}
+      <Text style={styles.name}>{user?.username}</Text>
+      <Text style={styles.bio}>
+          {user?.email}
+      </Text>
+      {user.created ? <TouchableOpacity style={styles.logout} onPress={logout}>
+        <Text>Log Out</Text>
+      </TouchableOpacity> : null}
     </View>
   );
 };
@@ -258,6 +293,9 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#fff',
     fontSize: 16,
+  },
+  logout: {
+    backgroundColor: "red",
   },
 });
 
