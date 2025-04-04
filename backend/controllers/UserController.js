@@ -87,7 +87,7 @@ const UserController = {
         */
         const target = req.params.uid;
         const token = req.get("sessionToken");
-        const applyPrivacyPrefs = false;
+        let applyPrivacyPrefs = false;
 
         const verifiedUser = await verifyLogin(token);
 
@@ -101,7 +101,7 @@ const UserController = {
         };
 
         try {
-            const ref = db.ref('users/' + username);
+            const ref = db.ref('users/' + target);
             const snapshot = await ref.once('value'); // Filter this based on requesting user
 
             if (!snapshot.exists()) {
