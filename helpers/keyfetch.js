@@ -7,7 +7,7 @@ async function saveInStore(key, value) {
         if (Platform.OS == 'web') {
             // THIS TRIED TO PRINT THE PAGE SO I DONT THINK WE SHOULD USE IT- just gonna do print statements
             // await AsyncStorage.setItem(key, value); // secure store not available on web so we use async store for testing- NOT SECURE
-            console.log("saved a key!");
+            console.log("saved a key! ", key, " to ", value);
         } else {
             await SecureStore.setItemAsync(key, value.toString());
         }
@@ -23,7 +23,7 @@ async function getFromStore(key) {
     try {
         if (Platform.OS == 'web') {
             // result = await AsyncStorage.getItem(key);
-            console.log("set a key!");
+            console.log("set a key! ", key);
         } else {
             result = await SecureStore.getItemAsync(key);
         }
@@ -40,7 +40,7 @@ async function removeFromStore(key) {
     try {
         if (Platform.OS == 'web') {
             // await AsyncStorage.deleteItem(key);
-            console.log("deleted a key!");
+            console.log("deleted a key! ", key);
         } else {
             await SecureStore.deleteItemAsync(key);
         }

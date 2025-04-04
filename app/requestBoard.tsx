@@ -132,6 +132,7 @@ export default function App() {
 
     // Fetch requests when the component loads
     React.useEffect(() => {
+        // console.log("Session when useEffecting requestboard: ", sessionContext);
         if (sessionContext.isLoggedIn != "true") {
             router.push("/" as any); // Redirect to login page if not signed in
         }

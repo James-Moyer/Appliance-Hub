@@ -64,15 +64,16 @@ const ProfilePage: React.FC = () => {
   }
 
   React.useEffect(() => {
-      if (sessionContext.isLoggedIn != "true") {
-        router.push("/" as any); // Redirect to login page if not signed in
-      }
-      // console.log("Session in profile page: ", sessionContext);
-      // console.log("user: ", user);
-      if (!user.created) { // Just check to see if values have been populated yet
-        console.log("user data not yet fetched, grabbing it now");
-        getResponse();
-      }
+    // console.log("Session when useEffecting profile page: ", sessionContext);
+    if (sessionContext.isLoggedIn != "true") {
+      router.push("/" as any); // Redirect to login page if not signed in
+    }
+    // console.log("Session in profile page: ", sessionContext);
+    // console.log("user: ", user);
+    if (!user.created) { // Just check to see if values have been populated yet
+      // console.log("user data not yet fetched, grabbing it now");
+      getResponse();
+    }
     });
 
   return (

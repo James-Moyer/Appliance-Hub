@@ -86,7 +86,7 @@ export default function Login() {
   }
 
   React.useEffect(() => {
-    console.log("Session: ", sessionContext);
+    // console.log("Session when useEffecting index: ", sessionContext);
     if (sessionContext.isLoggedIn == "true") {
       router.push("/profile_page" as any);
     } else {
