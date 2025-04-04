@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import {
   View,
   Text,
@@ -8,7 +8,8 @@ import {
   Alert
 } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
-import { getValue } from '../helpers/keyfetch';
+// import { getFromStore } from '../helpers/keyfetch';
+import { SessionContext } from '@/helpers/sessionContext';
 
 interface UserData {
   username?: string;
@@ -25,6 +26,8 @@ export default function PublicProfile() {
   const [user, setUser] = useState<UserData>({});
   const [loading, setLoading] = useState(true);
 
+  const { sessionContext }  = useContext(SessionContext);
+
   useEffect(() => {
     (async () => {
       try {
@@ -35,8 +38,9 @@ export default function PublicProfile() {
         }
 
         // We need a valid sessionToken to fetch from the backend
-        const token = await getValue('sessionToken');
+        const token = sessionContext.token;
         if (!token) {
+          console.log("Token not found, log back in!")
           Alert.alert('Not logged in', 'Please log in first.');
           setLoading(false);
           return;

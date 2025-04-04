@@ -29,15 +29,13 @@ const ProfilePage: React.FC = () => {
   const { sessionContext, setContext }  = useContext(SessionContext);
 
   const [user, setUser] = useState<UserData>({});
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(false);
   const [editing, setEditing] = useState<boolean>(false);
 
   // Local state for edits
   const [editedUsername, setEditedUsername] = useState('');
   const [editedLocation, setEditedLocation] = useState('');
   const [editedFloor, setEditedFloor] = useState('');
-
-
   
   const logout = async() => {
     // console.log("logging out..");
@@ -78,7 +76,7 @@ const ProfilePage: React.FC = () => {
 
     if (response.ok) {
         const returnedData = await response.json();
-        // console.log("Returned data: ", returnedData);
+        console.log("Returned data: ", returnedData);
         setUser(returnedData);
         // set initial edits
         setEditedUsername(returnedData.username || '');
@@ -188,7 +186,7 @@ const ProfilePage: React.FC = () => {
       ) : (
         <>
           <Text style={styles.name}>
-            {user.username || 'No username'}
+            {user.username || 'Loading...'}
           </Text>
           <Text style={styles.email}>
             {user.email || 'No email'}
@@ -229,10 +227,6 @@ const ProfilePage: React.FC = () => {
           <Text style={styles.buttonText}>Edit Profile</Text>
         </TouchableOpacity>
       )}
-      <Text style={styles.name}>{user?.username}</Text>
-      <Text style={styles.bio}>
-          {user?.email}
-      </Text>
       {user.created ? <TouchableOpacity style={styles.logout} onPress={logout}>
         <Text>Log Out</Text>
       </TouchableOpacity> : null}

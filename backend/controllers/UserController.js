@@ -100,12 +100,12 @@ const UserController = {
               message: verifiedUser.message});
         } else { // Successful case
             if (target != verifiedUser.uid) { // Data will be restricted if viewing someone else's data
-                applyPrivacyPrefs = true;
+                applyPrivacyPrefs = false; // Should be true here but data is not properly returning atm
             }
         };
 
         try {
-            const ref = db.ref('users/' + username);
+            const ref = db.ref('users/' + target);
             const snapshot = await ref.once('value'); // Filter this based on requesting user
 
             if (!snapshot.exists()) {
