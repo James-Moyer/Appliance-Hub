@@ -23,7 +23,7 @@ async function getFromStore(key) {
     try {
         if (Platform.OS == 'web') {
             // result = await AsyncStorage.getItem(key);
-            console.log("set a key! ", key);
+            console.log("got a key! ", key);
         } else {
             result = await SecureStore.getItemAsync(key);
         }
