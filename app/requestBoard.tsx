@@ -21,7 +21,6 @@ import { SessionContext } from '@/helpers/sessionContext';
 export default function RequestBoard() {
     const router = useRouter();
 
-
     const [filter, setFilter] = useState('');
     const [requests, setRequests] = useState<Request[]>([]);
     const {sessionContext} = useContext(SessionContext);
