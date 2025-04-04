@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
 import { Appbar } from "react-native-paper";
 import { getAuth } from "firebase/auth";
 import { getFromStore } from '../helpers/keyfetch';
+import { SessionContext } from '@/helpers/sessionContext';
 import { USERS_ENDPOINT, MESSAGES_ENDPOINT } from '../constants/constants';
 
 type UserType = {
@@ -32,6 +33,8 @@ export default function ChatScreen() {
   const [messages, setMessages] = useState<MessageType[]>([]);
   const [input, setInput] = useState("");
 
+  const {sessionContext} = useContext(SessionContext);
+
   // Current logged-in user's UID
   const [myUid, setMyUid] = useState("");
 
@@ -46,7 +49,7 @@ export default function ChatScreen() {
 
   const loadAllUsers = async () => {
     try {
-      const token = await getFromStore("sessionToken"); // get the Firebase ID token
+      const token = sessionContext.token;
       if (!token) return;
 
       const response = await fetch(USERS_ENDPOINT, {
@@ -79,7 +82,7 @@ export default function ChatScreen() {
     setMessages([]); // Clear previous messages
 
     try {
-      const token = await getFromStore("sessionToken");
+      const token = sessionContext.token;
       if (!token) return;
 
       // Fetch messages using UIDs as query parameters
@@ -108,7 +111,7 @@ export default function ChatScreen() {
     const textToSend = input.trim();
 
     try {
-      const token = await getFromStore("sessionToken");
+      const token = sessionContext.token;
       if (!token) return;
 
       // Send UIDs instead of emails
