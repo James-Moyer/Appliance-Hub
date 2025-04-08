@@ -14,7 +14,6 @@ import {
 import DropDownPicker from 'react-native-dropdown-picker';
 import { Request } from '../types/types';
 import { useRouter } from 'expo-router';
-import { getFromStore } from '../helpers/keyfetch';
 import { REQUESTS_ENDPOINT } from '../constants/constants';
 import { SessionContext } from '@/helpers/sessionContext';
 
@@ -150,7 +149,7 @@ export default function RequestBoard() {
     };
 
     // Fetch requests when the component loads
-    React.useEffect(() => {
+    useEffect(() => {
         // console.log("Session when useEffecting requestboard: ", sessionContext);
         if (sessionContext.isLoggedIn != "true") {
             router.push("/" as any); // Redirect to login page if not signed in

@@ -9,7 +9,6 @@ import {
 } from "react-native";
 import { Appbar } from "react-native-paper";
 import { getAuth } from "firebase/auth";
-import { getFromStore } from '../helpers/keyfetch';
 import { SessionContext } from '@/helpers/sessionContext';
 import { USERS_ENDPOINT, MESSAGES_ENDPOINT } from '../constants/constants';
 

@@ -6,7 +6,6 @@ import ApplianceList from '../components/ApplianceList';
 import { Appliance } from '../types/types';
 import { useRouter } from 'expo-router';
 import { SessionContext } from '@/helpers/sessionContext';
-import { getFromStore } from '../helpers/keyfetch';
 import { APPLIANCES_ENDPOINT } from '../constants/constants';
 
 export default function App() {

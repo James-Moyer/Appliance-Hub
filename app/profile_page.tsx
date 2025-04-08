@@ -140,7 +140,7 @@ const ProfilePage: React.FC = () => {
     }
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     // console.log("Session when useEffecting profile page: ", sessionContext);
     if (sessionContext.isLoggedIn != "true") {
       router.push("/" as any); // Redirect to login page if not signed in
