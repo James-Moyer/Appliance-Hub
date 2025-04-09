@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useCallback, useContext } from 'react';
 import { SafeAreaView, StyleSheet, Text, TextInput, View, Button, Modal, Alert } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { getAuth } from 'firebase/auth';
 import ApplianceList from '../components/ApplianceList';
 import { Appliance } from '../types/types';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { SessionContext } from '@/helpers/sessionContext';
 import { APPLIANCES_ENDPOINT } from '../constants/constants';
 
@@ -53,15 +53,7 @@ export default function App() {
         }
     };
 
-    useEffect(() => {
-        fetchAppliances();
-        const auth = getAuth();
-        const currentUser = auth.currentUser;
-        if (currentUser && currentUser.email && currentUser.uid) {
-            setMyEmail(currentUser.email);
-            setMyUid(currentUser.uid);
-        }
-    }, []);
+    
 
     const handleCreateAppliance = async () => {
         const token = sessionContext.token;
@@ -116,6 +108,29 @@ export default function App() {
             )
         );
     };
+
+    useFocusEffect(
+        // To check if a user is signed in before loading the page
+        (
+          // Throw in an alert or something here so user knows what's happening?
+            useCallback(() => {
+                console.log("Focused appliance board");
+                if (sessionContext.isLoggedIn != "true") {
+                router.push("/" as any); // Redirect to login page if not signed in
+                }
+            }, [])
+        )
+    );
+
+    useEffect(() => {
+        fetchAppliances();
+        const auth = getAuth();
+        const currentUser = auth.currentUser;
+        if (currentUser && currentUser.email && currentUser.uid) {
+            setMyEmail(currentUser.email);
+            setMyUid(currentUser.uid);
+        }
+    }, []);
 
     return (
         <View style={styles.container}>

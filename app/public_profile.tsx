@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useState, useContext, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,7 +7,7 @@ import {
   ActivityIndicator,
   Alert
 } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useFocusEffect, useRouter } from 'expo-router';
 // import { getFromStore } from '../helpers/keyfetch';
 import { SessionContext } from '@/helpers/sessionContext';
 import { USERS_ENDPOINT } from '../constants/constants';
@@ -23,11 +23,25 @@ interface UserData {
 }
 
 export default function PublicProfile() {
+  const router = useRouter();
   const { email } = useLocalSearchParams();  // read ?email= from URL
   const [user, setUser] = useState<UserData>({});
   const [loading, setLoading] = useState(true);
 
   const { sessionContext }  = useContext(SessionContext);
+
+  useFocusEffect(
+    // To check if a user is signed in before loading the page
+    (
+      // Throw in an alert or something here so user knows what's happening?
+      useCallback(() => {
+        console.log("Focused public profile");
+        if (sessionContext.isLoggedIn != "true") {
+          router.push("/" as any); // Redirect to login page if not signed in
+        }
+      }, [])
+    )
+  );
 
   useEffect(() => {
     (async () => {

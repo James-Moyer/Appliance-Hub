@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useState, useContext, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,7 +10,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { saveInStore, removeFromStore } from '../helpers/keyfetch'; // local storage helpers
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { SessionContext } from '@/helpers/sessionContext';
 import { USERS_ENDPOINT } from '../constants/constants';
 
@@ -60,6 +60,7 @@ const ProfilePage: React.FC = () => {
     
     setFetched(false);
     // console.log("logged out");
+    router.push("/" as any);
   };
 
   const handleEditToggle = () => {
@@ -142,17 +143,28 @@ const ProfilePage: React.FC = () => {
 
   useEffect(() => {
     // console.log("Session when useEffecting profile page: ", sessionContext);
-    if (sessionContext.isLoggedIn != "true") {
-      router.push("/" as any); // Redirect to login page if not signed in
-    }
     // console.log("Session in profile page: ", sessionContext);
     // console.log("user: ", user);
     if (!infoFetched) { // Just check to see if values have been populated yet
       console.log("user data not yet fetched, grabbing it now");
       getResponse();
     }
-    });
+  }, []);
 
+  useFocusEffect(
+    // To check if a user is signed in before loading the page
+    (
+      useCallback(() => {
+        // console.log("Focused profile page");
+        // console.log(sessionContext);
+        // Throw in an alert or something here so user knows what's happening?
+        if (sessionContext.isLoggedIn != "true") {
+          router.push("/" as any); // Redirect to login page if not signed in
+        }
+      }, [])
+    )
+  );
+  
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
