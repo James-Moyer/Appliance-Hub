@@ -1,15 +1,12 @@
 import React, { useState, useEffect, useCallback, useContext } from 'react';
 import { SafeAreaView, StyleSheet, Text, TextInput, View, Button, Modal, Alert } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
-import { getAuth } from 'firebase/auth';
-import ApplianceList from '../components/ApplianceList';
-import { Appliance } from '../types/types';
-import { useRouter, useFocusEffect } from 'expo-router';
+import ApplianceList from '../../components/ApplianceList';
+import { Appliance } from '../../types/types';
 import { SessionContext } from '@/helpers/sessionContext';
-import { APPLIANCES_ENDPOINT } from '../constants/constants';
+import { APPLIANCES_ENDPOINT } from '../../constants/constants';
 
 export default function App() {
-    const router = useRouter();
     const [myEmail, setMyEmail] = useState('');
     const [myUid, setMyUid] = useState('');
     const {sessionContext} = useContext(SessionContext);
@@ -52,8 +49,6 @@ export default function App() {
             }
         }
     };
-
-    
 
     const handleCreateAppliance = async () => {
         const token = sessionContext.token;
@@ -109,26 +104,11 @@ export default function App() {
         );
     };
 
-    useFocusEffect(
-        // To check if a user is signed in before loading the page
-        (
-          // Throw in an alert or something here so user knows what's happening?
-            useCallback(() => {
-                console.log("Focused appliance board");
-                if (sessionContext.isLoggedIn != "true") {
-                router.push("/" as any); // Redirect to login page if not signed in
-                }
-            }, [])
-        )
-    );
-
     useEffect(() => {
         fetchAppliances();
-        const auth = getAuth();
-        const currentUser = auth.currentUser;
-        if (currentUser && currentUser.email && currentUser.uid) {
-            setMyEmail(currentUser.email);
-            setMyUid(currentUser.uid);
+        if (sessionContext && sessionContext.email && sessionContext.UID) {
+            setMyEmail(sessionContext.email);
+            setMyUid(sessionContext.UID);
         }
     }, []);
 

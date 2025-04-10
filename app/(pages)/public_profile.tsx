@@ -10,7 +10,7 @@ import {
 import { useLocalSearchParams, useFocusEffect, useRouter } from 'expo-router';
 // import { getFromStore } from '../helpers/keyfetch';
 import { SessionContext } from '@/helpers/sessionContext';
-import { USERS_ENDPOINT } from '../constants/constants';
+import { USERS_ENDPOINT } from '../../constants/constants';
 
 interface UserData {
   username?: string;

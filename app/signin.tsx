@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,9 +9,10 @@ import {
   Keyboard,
   Animated,
   TouchableWithoutFeedback,
-  ImageBackground
+  ImageBackground,
+  ActivityIndicator
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { saveInStore, getFromStore } from '../helpers/keyfetch';
 import { auth } from './firebase/firebaseConfig';
@@ -21,6 +22,8 @@ export default function Login() {
   const router = useRouter();
 
   const { sessionContext, setContext } = useContext(SessionContext);
+
+  const [loading, setLoading] = useState<boolean>(false);
 
   // Form state for login (email & password)
   const [form, setForm] = useState({ email: '', password: '' });
@@ -67,6 +70,8 @@ export default function Login() {
       await saveInStore("sessionToken", idToken); // Session token is stored as "userToken"
       await saveInStore("UID", userCredential.user.uid); // Save UID locally so we know what profile is the one signed in
 
+      router.navigate("/");
+
     } catch (error: any) {
       console.error('Login error:', error);
       Alert.alert('Login Error', error.message);
@@ -74,6 +79,7 @@ export default function Login() {
   };
 
   const checkSecureStore = async () => {
+    setLoading(true);
     const tokenres = await getFromStore("SessionToken");
     const uidres = await getFromStore("UID");
     if (tokenres && uidres) { // Set state vars and redirect to profile page if already logged in
@@ -83,17 +89,32 @@ export default function Login() {
         UID : uidres,
         token : tokenres,
       });
+      router.navigate("/" as any);
     }
+    setLoading(false);
   }
 
-  React.useEffect(() => {
-    // console.log("Session when useEffecting index: ", sessionContext);
-    if (sessionContext.isLoggedIn == "true") {
-      router.push("/profile_page" as any);
-    } else {
-      checkSecureStore();
-    }
-  });
+  useFocusEffect(
+    // To check if a user is signed in before loading the page
+    (
+      // Throw in an alert or something here so user knows what's happening?
+      useCallback(() => {
+        if (sessionContext.isLoggedIn == "true") {
+          router.navigate("/" as any);
+        } else {
+          checkSecureStore();
+        }
+      }, [])
+    )
+  );
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#333" />
+      </View>
+    );
+  }
 
   return (
     <SessionContext.Provider value={sessionContext}>
@@ -151,6 +172,10 @@ export default function Login() {
 }
 
 const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+  },
   image: {
     flex: 1,  
     width: '100%',

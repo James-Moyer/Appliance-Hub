@@ -8,10 +8,8 @@ import {
   StyleSheet
 } from "react-native";
 import { Appbar } from "react-native-paper";
-import { getAuth } from "firebase/auth";
 import { SessionContext } from '@/helpers/sessionContext';
-import { USERS_ENDPOINT, MESSAGES_ENDPOINT } from '../constants/constants';
-import { useRouter, useFocusEffect} from 'expo-router';
+import { USERS_ENDPOINT, MESSAGES_ENDPOINT } from '../../constants/constants';
 
 type UserType = {
   uid: string;
@@ -28,7 +26,6 @@ type MessageType = {
 };
 
 export default function ChatScreen() {
-  const router = useRouter();
 
   const [allUsers, setAllUsers] = useState<UserType[]>([]);
   const [selectedUser, setSelectedUser] = useState<UserType | null>(null);
@@ -41,26 +38,11 @@ export default function ChatScreen() {
   const [myUid, setMyUid] = useState("");
 
   useEffect(() => {
-    const auth = getAuth();
-    const currentUser = auth.currentUser;
-    if (currentUser && currentUser.uid) {
-      setMyUid(currentUser.uid);
+    if (sessionContext && sessionContext.UID) {
+      setMyUid(sessionContext.uid);
     }
     loadAllUsers();
   }, []);
-
-  useFocusEffect(
-    // To check if a user is signed in before loading the page
-    (
-      // Throw in an alert or something here so user knows what's happening?
-      useCallback(() => {
-        console.log("Focused chat screen");
-        if (sessionContext.isLoggedIn != "true") {
-          router.push("/" as any); // Redirect to login page if not signed in
-        }
-      }, [])
-    )
-  );
 
   const loadAllUsers = async () => {
     try {

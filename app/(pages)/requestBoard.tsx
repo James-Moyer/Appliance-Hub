@@ -12,9 +12,9 @@ import {
 } from 'react-native';
 // import { getAuth } from 'firebase/auth';
 import DropDownPicker from 'react-native-dropdown-picker';
-import { Request } from '../types/types';
+import { Request } from '../../types/types';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { REQUESTS_ENDPOINT } from '../constants/constants';
+import { REQUESTS_ENDPOINT } from '../../constants/constants';
 import { SessionContext } from '@/helpers/sessionContext';
 
 export default function RequestBoard() {

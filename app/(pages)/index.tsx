@@ -9,10 +9,10 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
-import { saveInStore, removeFromStore } from '../helpers/keyfetch'; // local storage helpers
+import { saveInStore, removeFromStore } from '../../helpers/keyfetch'; // local storage helpers
 import { useFocusEffect, useRouter } from 'expo-router';
 import { SessionContext } from '@/helpers/sessionContext';
-import { USERS_ENDPOINT } from '../constants/constants';
+import { USERS_ENDPOINT } from '../../constants/constants';
 
 interface UserData {
   username?: string;
@@ -30,7 +30,6 @@ const ProfilePage: React.FC = () => {
   const { sessionContext, setContext }  = useContext(SessionContext);
 
   const [user, setUser] = useState<UserData>({});
-  const [loading, setLoading] = useState<boolean>(false);
   const [editing, setEditing] = useState<boolean>(false);
   const [infoFetched, setFetched] = useState(false);
 
@@ -149,29 +148,7 @@ const ProfilePage: React.FC = () => {
       console.log("user data not yet fetched, grabbing it now");
       getResponse();
     }
-  }, []);
-
-  useFocusEffect(
-    // To check if a user is signed in before loading the page
-    (
-      useCallback(() => {
-        // console.log("Focused profile page");
-        // console.log(sessionContext);
-        // Throw in an alert or something here so user knows what's happening?
-        if (sessionContext.isLoggedIn != "true") {
-          router.push("/" as any); // Redirect to login page if not signed in
-        }
-      }, [])
-    )
-  );
-  
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#333" />
-      </View>
-    );
-  }
+  }, [infoFetched]);
 
   return (
     <View style={styles.container}>
@@ -256,10 +233,6 @@ const ProfilePage: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-  },
   container: {
     flex: 1,
     alignItems: 'center',
