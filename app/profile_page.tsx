@@ -163,82 +163,84 @@ const ProfilePage: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <Image
-        source={{
-          uri: 'https://i.pinimg.com/736x/2f/15/f2/2f15f2e8c688b3120d3d26467b06330c.jpg',
-        }}
-        style={styles.profileImage}
-      />
+      <View style={styles.card}>
+        <Image
+          source={{
+            uri: 'https://i.pinimg.com/736x/2f/15/f2/2f15f2e8c688b3120d3d26467b06330c.jpg',
+          }}
+          style={styles.profileImage}
+        />
 
-      {editing ? (
-        <>
-          <TextInput
-            style={styles.editInput}
-            placeholder="Username"
-            value={editedUsername}
-            onChangeText={setEditedUsername}
-          />
-          <TextInput
-            style={styles.editInput}
-            placeholder="Location (Sandburg East, etc.)"
-            value={editedLocation}
-            onChangeText={setEditedLocation}
-          />
-          <TextInput
-            style={styles.editInput}
-            placeholder="Floor"
-            value={editedFloor}
-            onChangeText={setEditedFloor}
-            keyboardType="numeric"
-          />
-        </>
-      ) : (
-        <>
-          <Text style={styles.name}>
-            {user.username || 'Loading...'}
-          </Text>
-          <Text style={styles.email}>
-            {user.email || 'No email'}
-          </Text>
-          <Text style={styles.detail}>
-            Dorm: {user.location ?? 'N/A'} / Floor: {user.floor ?? 'N/A'}
-          </Text>
-        </>
-      )}
+        {editing ? (
+          <>
+            <TextInput
+              style={styles.editInput}
+              placeholder="Username"
+              value={editedUsername}
+              onChangeText={setEditedUsername}
+            />
+            <TextInput
+              style={styles.editInput}
+              placeholder="Location (Sandburg East, etc.)"
+              value={editedLocation}
+              onChangeText={setEditedLocation}
+            />
+            <TextInput
+              style={styles.editInput}
+              placeholder="Floor"
+              value={editedFloor}
+              onChangeText={setEditedFloor}
+              keyboardType="numeric"
+            />
+          </>
+        ) : (
+          <>
+            <Text style={styles.name}>
+              {user.username || 'Loading...'}
+            </Text>
+            <Text style={styles.email}>
+              {user.email || 'No email'}
+            </Text>
+            <Text style={styles.detail}>
+              Dorm: {user.location ?? 'N/A'} / Floor: {user.floor ?? 'N/A'}
+            </Text>
+          </>
+        )}
 
-      {editing ? (
-        <View style={{ flexDirection: 'row', marginTop: 20 }}>
-          <TouchableOpacity
-            style={[styles.button, { backgroundColor: 'green', marginRight: 10 }]}
-            onPress={handleSave}
+        {editing ? (
+          <View style={{ flexDirection: 'row', marginTop: 20 }}>
+            <TouchableOpacity
+              style={[styles.button, { backgroundColor: 'green', marginRight: 10 }]}
+              onPress={handleSave}
+            >
+              <Text style={styles.buttonText}>Save</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.button, { backgroundColor: 'gray' }]}
+              onPress={() => {
+                // revert changes
+                setEditedUsername(user.username || '');
+                setEditedLocation(user.location || '');
+                setEditedFloor(user.floor?.toString() || '');
+                setEditing(false);
+              }}
+            >
+              <Text style={styles.buttonText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          infoFetched ? <TouchableOpacity
+            style={[styles.button, { backgroundColor: '#007bff', marginTop: 20 }]}
+            onPress={handleEditToggle}
           >
-            <Text style={styles.buttonText}>Save</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.button, { backgroundColor: 'gray' }]}
-            onPress={() => {
-              // revert changes
-              setEditedUsername(user.username || '');
-              setEditedLocation(user.location || '');
-              setEditedFloor(user.floor?.toString() || '');
-              setEditing(false);
-            }}
-          >
-            <Text style={styles.buttonText}>Cancel</Text>
-          </TouchableOpacity>
-        </View>
-      ) : (
-        infoFetched ? <TouchableOpacity
-          style={[styles.button, { backgroundColor: '#007bff', marginTop: 20 }]}
-          onPress={handleEditToggle}
-        >
-          <Text style={styles.buttonText}>Edit Profile</Text>
-        </TouchableOpacity> : null
-      )}
-      {infoFetched ? <TouchableOpacity style={styles.logout} onPress={logout}>
-        <Text>Log Out</Text>
-      </TouchableOpacity> : null}
+            <Text style={styles.buttonText}>Edit Profile</Text>
+          </TouchableOpacity> : null
+        )}
+        {infoFetched ? <TouchableOpacity style={styles.logout} onPress={logout}>
+          <Text style={styles.buttonText}>Log Out</Text>
+        </TouchableOpacity> : null}
+      </View>
     </View>
   );
 };
@@ -252,14 +254,27 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     paddingTop: 40,
-    paddingHorizontal: 20,
-    backgroundColor: '#f5f5f5',
+    paddingHorizontal: 10,
+    backgroundColor: '#90BE6D',
   },
+  card: {
+    width: '100%',
+    backgroundColor: '#FFE2D1',
+    height: '75%',
+    borderRadius: 16,
+    padding: 30,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    marginTop: 15,
+  },  
   profileImage: {
     width: 120,
     height: 120,
     borderRadius: 60,
     marginBottom: 10,
+    marginLeft: 80,
   },
   name: {
     fontSize: 22,
@@ -276,7 +291,7 @@ const styles = StyleSheet.create({
   detail: {
     fontSize: 16,
     color: '#555',
-    marginBottom: 5,
+    marginBottom: 15,
     textAlign: 'center',
   },
   editInput: {
@@ -289,7 +304,9 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   button: {
-    padding: 12,
+    width: "80%",
+    marginLeft: 30,
+    padding: 16,
     borderRadius: 5,
     alignItems: 'center',
   },
@@ -299,6 +316,12 @@ const styles = StyleSheet.create({
   },
   logout: {
     backgroundColor: "red",
+    marginTop: 10,
+    width: "80%",
+    marginLeft: 30,
+    padding: 16,
+    borderRadius: 5,
+    alignItems: 'center',
   },
 });
 
