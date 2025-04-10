@@ -39,7 +39,7 @@ export default function ChatScreen() {
 
   useEffect(() => {
     if (sessionContext && sessionContext.UID) {
-      setMyUid(sessionContext.uid);
+      setMyUid(sessionContext.UID);
     }
     loadAllUsers();
   }, []);
