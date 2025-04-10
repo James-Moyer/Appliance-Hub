@@ -1,18 +1,8 @@
 import React, { useState, useEffect, useCallback, useContext } from 'react';
-import {
-  SafeAreaView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-  Button,
-  Modal,
-  Alert,
-  TouchableOpacity
-} from 'react-native';
-// import { getAuth } from 'firebase/auth';
+import { SafeAreaView, StyleSheet, Text, TextInput, View, Button, Modal, Alert } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { Request } from '../../types/types';
+import RequestList from '../../components/RequestList';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { REQUESTS_ENDPOINT } from '../../constants/constants';
 import { SessionContext } from '@/helpers/sessionContext';
@@ -44,24 +34,15 @@ export default function RequestBoard() {
     // State so we don't send too many requests- users can use the refresh button
     const [requestsFetched, setFetched] = useState(false);
 
-
-  // Filter logic- How are these two implementations different?
-    // From Marwan_update6
-    const getFilteredRequests = () => {
-        return requests.filter(
-        (r) =>
-            r.applianceName.toLowerCase().includes(filter.toLowerCase()) ||
-            r.requesterEmail.toLowerCase().includes(filter.toLowerCase())
-        )
-    }
-
-    // From main as of 3/31 or so
-    // const getFilteredRequests = () => {
-    //     return requests.filter((request) =>
-    //         request.applianceName.toLowerCase().includes(filter.toLowerCase()) ||
-    //         request.requesterEmail.toLowerCase().includes(filter.toLowerCase())
-    //     );
-    // };
+    const getFilteredRequests = () => { // this board will not show requests made by the current user
+        return requests.filter((request) =>
+            request.requesterEmail !== myEmail &&
+            (
+              request.applianceName.toLowerCase().includes(filter.toLowerCase()) ||
+              request.requesterEmail.toLowerCase().includes(filter.toLowerCase())
+            )
+        );
+    };
     
     const fetchRequests = async () => {
         const token = sessionContext.token;
@@ -102,7 +83,6 @@ export default function RequestBoard() {
         if (token) {
             try {
                 if (myEmail != null) {
-                    // newRequest.requesterEmail = myEmail; // Set the requester email to the current user's email
                     // Validate all required fields before sending
                     if (!newRequest.requesterEmail || !newRequest.applianceName || !newRequest.requestDuration || !newRequest.status) {
                         Alert.alert('Error', 'Please fill out all required fields');
@@ -179,7 +159,7 @@ export default function RequestBoard() {
       {/* Filter / Search bar */}
       <TextInput
         style={styles.searchBar}
-        placeholder="Search by appliance or owner..."
+        placeholder="Search by appliance or requester email..."
         placeholderTextColor="#555"
         value={filter}
         onChangeText={setFilter}
@@ -187,31 +167,9 @@ export default function RequestBoard() {
 
       <Button title="Refresh" onPress={fetchRequests} />
 
-      {/* Inline list of requests */}
-      <SafeAreaView style={{ flex: 1, width: '100%' }}>
-        {getFilteredRequests().map((item, idx) => (
-          <View key={idx} style={styles.requestCard}>
-            <Text style={styles.title}>{item.applianceName}</Text>
-
-            {/* Make the Owner field clickable */}
-            <TouchableOpacity
-              onPress={() => {
-                // Navigate to the public profile, passing ?email=...
-                router.push(
-                  `/public_profile?email=${encodeURIComponent(item.requesterEmail)}`
-                );
-              }}
-            >
-              <Text style={styles.ownerText}>
-                Owner: {item.requesterEmail}
-              </Text>
-            </TouchableOpacity>
-
-            <Text>Status: {item.status}</Text>
-            <Text>Collateral: {item.collateral ? 'Yes' : 'No'}</Text>
-            <Text>Request Duration: {item.requestDuration as number} hours</Text>
-          </View>
-        ))}
+      {/* Request List */}
+      <SafeAreaView style={styles.container}>
+          <RequestList data={getFilteredRequests()} />
       </SafeAreaView>
 
       {/* Modal to create a request */}
@@ -332,12 +290,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 4
-  },
-  ownerText: {
-    color: 'blue',
-    textDecorationLine: 'underline',
-    marginBottom: 4,
-    fontSize: 16
   },
   modalContainer: {
     flex: 1,

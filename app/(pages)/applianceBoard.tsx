@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useContext } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { SafeAreaView, StyleSheet, Text, TextInput, View, Button, Modal, Alert } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import ApplianceList from '../../components/ApplianceList';
@@ -128,7 +128,7 @@ export default function App() {
                 onChangeText={setFilter}
             />
 
-            {/* Request List */}
+            {/* Appliance List */}
             <SafeAreaView style={styles.container}>
                 <ApplianceList data={getFilteredAppliances()} />
             </SafeAreaView>
