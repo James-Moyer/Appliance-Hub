@@ -23,6 +23,19 @@ const RequestList: React.FC<Props> = ({ data }) => {
             <Text>Status: {item.status}</Text>
             <Text>Collateral: {item.collateral ? 'Yes' : 'No'}</Text>
             <Text>Request Duration: {item.requestDuration.toString()} hours</Text>
+
+            {/* Chat Button */}
+            <TouchableOpacity
+                style={styles.chatButton}
+                onPress={() => {
+                    router.push({
+                        pathname: '/chatScreen',  
+                        params: { email: item.requesterEmail },
+                    });
+                }}
+            >
+            <Text style={styles.chatButtonText}>Chat with Requester</Text>
+            </TouchableOpacity>
         </View>
     );
 
@@ -61,7 +74,18 @@ const styles = StyleSheet.create({
         textDecorationLine: 'underline',
         marginBottom: 4,
         fontSize: 16
-      },
+    },
+    chatButton: {
+        marginTop: 10,
+        backgroundColor: '#007AFF',
+        padding: 10,
+        borderRadius: 8,
+        alignItems: 'center',
+    },
+    chatButtonText: {
+        color: '#fff',
+        fontSize: 16,
+    },
 });
 
 export default RequestList;

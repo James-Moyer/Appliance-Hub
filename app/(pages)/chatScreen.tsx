@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   StyleSheet
 } from "react-native";
+import { useRoute, useFocusEffect } from "@react-navigation/native";
 import { Appbar } from "react-native-paper";
 import { SessionContext } from '@/helpers/sessionContext';
 import { USERS_ENDPOINT, MESSAGES_ENDPOINT } from '../../constants/constants';
@@ -26,7 +27,7 @@ type MessageType = {
 };
 
 export default function ChatScreen() {
-
+  const route = useRoute();
   const [allUsers, setAllUsers] = useState<UserType[]>([]);
   const [selectedUser, setSelectedUser] = useState<UserType | null>(null);
   const [messages, setMessages] = useState<MessageType[]>([]);
@@ -36,6 +37,7 @@ export default function ChatScreen() {
 
   // Current logged-in user's UID
   const [myUid, setMyUid] = useState("");
+  const { email } = route.params as { email: string }; // for navigation from other screens
 
   useEffect(() => {
     if (sessionContext && sessionContext.UID) {
@@ -43,6 +45,17 @@ export default function ChatScreen() {
     }
     loadAllUsers();
   }, []);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      // Reset the state when the screen goes out of focus
+      return () => {
+        setSelectedUser(null);
+        setMessages([]);
+        setInput("");
+      };
+    }, [])
+  );
 
   const loadAllUsers = async () => {
     try {
@@ -73,6 +86,13 @@ export default function ChatScreen() {
       console.error("Error loading users:", err);
     }
   };
+
+  useEffect(() => {
+    if (email && allUsers.length > 0) {
+      const user = allUsers.find((user) => user.email === email);
+      selectUser(user!);
+    }
+  }, [email, allUsers]);
 
   const selectUser = async (user: UserType) => {
     setSelectedUser(user);
