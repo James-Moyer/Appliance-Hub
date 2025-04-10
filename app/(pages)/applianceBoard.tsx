@@ -1,16 +1,12 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useCallback, useContext } from 'react';
 import { SafeAreaView, StyleSheet, Text, TextInput, View, Button, Modal, Alert } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
-import { getAuth } from 'firebase/auth';
-import ApplianceList from '../components/ApplianceList';
-import { Appliance } from '../types/types';
-import { useRouter } from 'expo-router';
+import ApplianceList from '../../components/ApplianceList';
+import { Appliance } from '../../types/types';
 import { SessionContext } from '@/helpers/sessionContext';
-import { getFromStore } from '../helpers/keyfetch';
-import { APPLIANCES_ENDPOINT } from '../constants/constants';
+import { APPLIANCES_ENDPOINT } from '../../constants/constants';
 
 export default function App() {
-    const router = useRouter();
     const [myEmail, setMyEmail] = useState('');
     const [myUid, setMyUid] = useState('');
     const {sessionContext} = useContext(SessionContext);
@@ -53,16 +49,6 @@ export default function App() {
             }
         }
     };
-
-    useEffect(() => {
-        fetchAppliances();
-        const auth = getAuth();
-        const currentUser = auth.currentUser;
-        if (currentUser && currentUser.email && currentUser.uid) {
-            setMyEmail(currentUser.email);
-            setMyUid(currentUser.uid);
-        }
-    }, []);
 
     const handleCreateAppliance = async () => {
         const token = sessionContext.token;
@@ -117,6 +103,14 @@ export default function App() {
             )
         );
     };
+
+    useEffect(() => {
+        fetchAppliances();
+        if (sessionContext && sessionContext.email && sessionContext.UID) {
+            setMyEmail(sessionContext.email);
+            setMyUid(sessionContext.UID);
+        }
+    }, []);
 
     return (
         <View style={styles.container}>

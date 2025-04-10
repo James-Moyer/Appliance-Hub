@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useCallback, useContext } from 'react';
 import {
   SafeAreaView,
   StyleSheet,
@@ -12,10 +12,9 @@ import {
 } from 'react-native';
 // import { getAuth } from 'firebase/auth';
 import DropDownPicker from 'react-native-dropdown-picker';
-import { Request } from '../types/types';
-import { useRouter } from 'expo-router';
-import { getFromStore } from '../helpers/keyfetch';
-import { REQUESTS_ENDPOINT } from '../constants/constants';
+import { Request } from '../../types/types';
+import { useRouter, useFocusEffect } from 'expo-router';
+import { REQUESTS_ENDPOINT } from '../../constants/constants';
 import { SessionContext } from '@/helpers/sessionContext';
 
 export default function RequestBoard() {
@@ -149,12 +148,22 @@ export default function RequestBoard() {
         }
     };
 
-    // Fetch requests when the component loads
-    React.useEffect(() => {
-        // console.log("Session when useEffecting requestboard: ", sessionContext);
-        if (sessionContext.isLoggedIn != "true") {
+    useFocusEffect(
+      // To check if a user is signed in before loading the page
+      (
+      // Throw in an alert or something here so user knows what's happening?
+        useCallback(() => {
+          console.log("Focused request board, sessionContext:");
+          if (sessionContext.isLoggedIn != "true") {
             router.push("/" as any); // Redirect to login page if not signed in
-        }
+          }
+        }, [])
+      )
+    );
+
+    // Fetch requests when the component loads
+    useEffect(() => {
+        // console.log("Session when useEffecting requestboard: ", sessionContext);
         if (!requestsFetched) {
             fetchRequests();
         }

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useState, useContext, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,10 +9,10 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
-import { saveInStore, removeFromStore } from '../helpers/keyfetch'; // local storage helpers
-import { useRouter } from 'expo-router';
+import { saveInStore, removeFromStore } from '../../helpers/keyfetch'; // local storage helpers
+import { useFocusEffect, useRouter } from 'expo-router';
 import { SessionContext } from '@/helpers/sessionContext';
-import { USERS_ENDPOINT } from '../constants/constants';
+import { USERS_ENDPOINT } from '../../constants/constants';
 
 interface UserData {
   username?: string;
@@ -30,7 +30,6 @@ const ProfilePage: React.FC = () => {
   const { sessionContext, setContext }  = useContext(SessionContext);
 
   const [user, setUser] = useState<UserData>({});
-  const [loading, setLoading] = useState<boolean>(false);
   const [editing, setEditing] = useState<boolean>(false);
   const [infoFetched, setFetched] = useState(false);
 
@@ -60,6 +59,7 @@ const ProfilePage: React.FC = () => {
     
     setFetched(false);
     // console.log("logged out");
+    router.push("/" as any);
   };
 
   const handleEditToggle = () => {
@@ -140,26 +140,15 @@ const ProfilePage: React.FC = () => {
     }
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     // console.log("Session when useEffecting profile page: ", sessionContext);
-    if (sessionContext.isLoggedIn != "true") {
-      router.push("/" as any); // Redirect to login page if not signed in
-    }
     // console.log("Session in profile page: ", sessionContext);
     // console.log("user: ", user);
     if (!infoFetched) { // Just check to see if values have been populated yet
       console.log("user data not yet fetched, grabbing it now");
       getResponse();
     }
-    });
-
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#333" />
-      </View>
-    );
-  }
+  }, [infoFetched]);
 
   return (
     <View style={styles.container}>
@@ -244,10 +233,6 @@ const ProfilePage: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-  },
   container: {
     flex: 1,
     alignItems: 'center',

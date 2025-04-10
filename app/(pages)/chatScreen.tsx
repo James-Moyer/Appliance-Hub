@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, { useEffect, useState, useContext, useCallback } from "react";
 import {
   View,
   Text,
@@ -8,10 +8,8 @@ import {
   StyleSheet
 } from "react-native";
 import { Appbar } from "react-native-paper";
-import { getAuth } from "firebase/auth";
-import { getFromStore } from '../helpers/keyfetch';
 import { SessionContext } from '@/helpers/sessionContext';
-import { USERS_ENDPOINT, MESSAGES_ENDPOINT } from '../constants/constants';
+import { USERS_ENDPOINT, MESSAGES_ENDPOINT } from '../../constants/constants';
 
 type UserType = {
   uid: string;
@@ -28,6 +26,7 @@ type MessageType = {
 };
 
 export default function ChatScreen() {
+
   const [allUsers, setAllUsers] = useState<UserType[]>([]);
   const [selectedUser, setSelectedUser] = useState<UserType | null>(null);
   const [messages, setMessages] = useState<MessageType[]>([]);
@@ -39,10 +38,8 @@ export default function ChatScreen() {
   const [myUid, setMyUid] = useState("");
 
   useEffect(() => {
-    const auth = getAuth();
-    const currentUser = auth.currentUser;
-    if (currentUser && currentUser.uid) {
-      setMyUid(currentUser.uid);
+    if (sessionContext && sessionContext.UID) {
+      setMyUid(sessionContext.UID);
     }
     loadAllUsers();
   }, []);
