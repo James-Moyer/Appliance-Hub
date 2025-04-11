@@ -9,6 +9,15 @@ type Props = {
 
 const RequestList: React.FC<Props> = ({ data }) => {
     const router = useRouter();
+    const handleOpenChat = (someEmail: string) => {
+        router.push({
+          pathname: '/chatScreen',
+          params: {
+            fromRequestBoard: 'true',
+            email: someEmail
+          }
+        });
+      };
 
     const renderItem = ({ item }: { item: Request }) => (
         <View style={styles.card}>
@@ -23,6 +32,14 @@ const RequestList: React.FC<Props> = ({ data }) => {
             <Text>Status: {item.status}</Text>
             <Text>Collateral: {item.collateral ? 'Yes' : 'No'}</Text>
             <Text>Request Duration: {item.requestDuration.toString()} hours</Text>
+
+            {/* Chat Button */}
+            <TouchableOpacity
+              style={styles.chatButton}
+              onPress={() => handleOpenChat(item.requesterEmail)}
+            >
+              <Text style={{ color: '#fff' }}>Chat with Requester</Text>
+            </TouchableOpacity>
         </View>
     );
 
@@ -61,7 +78,14 @@ const styles = StyleSheet.create({
         textDecorationLine: 'underline',
         marginBottom: 4,
         fontSize: 16
-      },
+    },
+    chatButton: {
+        marginTop: 10,
+        backgroundColor: '#007AFF',
+        padding: 10,
+        borderRadius: 8,
+        alignItems: 'center',
+    },
 });
 
 export default RequestList;

@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useCallback } from 'react';
 import { SafeAreaView, StyleSheet, Text, TextInput, View, Button, Modal, Alert } from 'react-native';
+import { useRouter, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import DropDownPicker from 'react-native-dropdown-picker';
 import ApplianceList from '../../components/ApplianceList';
 import { Appliance } from '../../types/types';
@@ -7,6 +8,9 @@ import { SessionContext } from '@/helpers/sessionContext';
 import { APPLIANCES_ENDPOINT } from '../../constants/constants';
 
 export default function App() {
+    const router = useRouter();
+    const searchParams = useLocalSearchParams();
+
     const [myEmail, setMyEmail] = useState('');
     const [myUid, setMyUid] = useState('');
     const {sessionContext} = useContext(SessionContext);
@@ -103,6 +107,22 @@ export default function App() {
             )
         );
     };
+
+    // Whenever we come back to this screen, remove all search params so they don't stick
+    useFocusEffect(
+        useCallback(() => {
+            router.replace({
+                pathname: "/applianceBoard",
+                params: {}, // Reset all params
+            });
+
+            if (sessionContext.isLoggedIn !== 'true') {
+                router.push('/signin');
+            }
+        }, [
+            sessionContext.isLoggedIn
+        ])
+    );
 
     useEffect(() => {
         fetchAppliances();
@@ -222,6 +242,8 @@ export default function App() {
     );
 }
 
+
+// -------------- STYLES --------------
 const styles = StyleSheet.create({
     container: {
         flex: 1,

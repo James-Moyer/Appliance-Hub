@@ -3,152 +3,144 @@ import { SafeAreaView, StyleSheet, Text, TextInput, View, Button, Modal, Alert }
 import DropDownPicker from 'react-native-dropdown-picker';
 import { Request } from '../../types/types';
 import RequestList from '../../components/RequestList';
-import { useRouter, useFocusEffect } from 'expo-router';
+import { useRouter, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { REQUESTS_ENDPOINT } from '../../constants/constants';
 import { SessionContext } from '@/helpers/sessionContext';
 
 export default function RequestBoard() {
-    const router = useRouter();
+  const router = useRouter();
+  const searchParams = useLocalSearchParams();
 
-    const [filter, setFilter] = useState('');
-    const [requests, setRequests] = useState<Request[]>([]);
-    const {sessionContext} = useContext(SessionContext);
+  const [filter, setFilter] = useState('');
+  const [requests, setRequests] = useState<Request[]>([]);
+  const { sessionContext } = useContext(SessionContext);
 
-    const myEmail = sessionContext.email;
-    
-    // For creating a new request:
-    const [modalVisible, setModalVisible] = useState(false);
-    const [newRequest, setNewRequest] = useState<Request>({
-        requesterEmail: myEmail,
-        applianceName: '',
-        status: 'open', // Default status to 'Open'
-        collateral: false,
-        requestDuration: 60,
-    });
+  const myEmail = sessionContext.email;
 
-    // For the two dropdown pickers:
+  // For creating a new request:
+  const [modalVisible, setModalVisible] = useState(false);
+  const [newRequest, setNewRequest] = useState<Request>({
+    requesterEmail: myEmail,
+    applianceName: '',
+    status: 'open',
+    collateral: false,
+    requestDuration: 60
+  });
 
-    const [collateralPickerOpen, setCollateralPickerOpen] = useState(false);
-    const [durationPickerOpen, setDurationPickerOpen] = useState(false);
+  // For the two dropdown pickers:
+  const [collateralPickerOpen, setCollateralPickerOpen] = useState(false);
+  const [durationPickerOpen, setDurationPickerOpen] = useState(false);
 
-    // State so we don't send too many requests- users can use the refresh button
-    const [requestsFetched, setFetched] = useState(false);
+  // So we don't fetch requests multiple times:
+  const [requestsFetched, setFetched] = useState(false);
 
-    const getFilteredRequests = () => { // this board will not show requests made by the current user
-        return requests.filter((request) =>
-            request.requesterEmail !== myEmail &&
-            (
-              request.applianceName.toLowerCase().includes(filter.toLowerCase()) ||
-              request.requesterEmail.toLowerCase().includes(filter.toLowerCase())
-            )
-        );
-    };
-    
-    const fetchRequests = async () => {
-        const token = sessionContext.token;
-        console.log("fetching requests...");
-        if (token) {
-            try {
-                const response = await fetch(REQUESTS_ENDPOINT, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'sessionToken': String(token),
-                    },
-                });
-    
-                if (response.ok) {
-                    console.log("fetched requests ok");
-                    const all_requests = await response.json();
-                    const requestsArray = Object.values(all_requests) as Request[];
-                    setRequests(requestsArray); // Set the fetched requests
-                    setFetched(true);
-                } else {
-                    const data = await response.json();
-                    Alert.alert('Error', data.message);
-                    console.log("Error fetching: ", data);
-                }
-            } catch (error) {
-                Alert.alert('Error', 'An error occurred while fetching requests.');
-                console.error(error);
-            }
-        }
-    };
-    
-    // Handler to submit new request
-    const handleCreateRequest = async () => {
-        const token = sessionContext.token;
-        console.log("Creating a request");
-        setModalVisible(false); // Close the modal
-        if (token) {
-            try {
-                if (myEmail != null) {
-                    // Validate all required fields before sending
-                    if (!newRequest.requesterEmail || !newRequest.applianceName || !newRequest.requestDuration || !newRequest.status) {
-                        Alert.alert('Error', 'Please fill out all required fields');
-                        console.log("Not enough data entered: ", newRequest);
-                        return;
-                    }
-
-                    const response = await fetch(REQUESTS_ENDPOINT, {
-                        method: 'POST',
-                        headers: new Headers({
-                            "Content-Type" : "application/json",
-                            "sessionToken" : String(token)
-                        }),
-                        body: JSON.stringify(newRequest),
-                    });
-
-                    if (response.ok) {
-                        // console.log("got back ok!");
-                        Alert.alert('Success', 'Request created successfully.');
-                        setRequests([...requests, newRequest]); // Add the new request to the list
-                        
-                        // Reset form data
-                        setNewRequest({
-                            requesterEmail: newRequest.requesterEmail,
-                            applianceName: '',
-                            status: 'open', // Reset status to 'Open'
-                            collateral: newRequest.collateral,
-                            requestDuration: newRequest.requestDuration,
-                        });
-                    } else {
-                        const data = await response.json();
-                        Alert.alert('Error', data.message);
-                        console.log("Error: ", data);
-                        return;
-                    }
-                }
-            } catch (error) {
-                Alert.alert('Error', 'An error occurred. Please try again.');
-                console.error(error);
-            }
-        } else {
-            console.log("no token!", sessionContext);
-        }
-    };
-
-    useFocusEffect(
-      // To check if a user is signed in before loading the page
+  // Filter out requests from the current user, plus the text filter:
+  const getFilteredRequests = () => {
+    return requests.filter((req) =>
+      req.requesterEmail !== myEmail &&
       (
-      // Throw in an alert or something here so user knows what's happening?
-        useCallback(() => {
-          console.log("Focused request board, sessionContext:");
-          if (sessionContext.isLoggedIn != "true") {
-            router.push("/" as any); // Redirect to login page if not signed in
-          }
-        }, [])
+        req.applianceName.toLowerCase().includes(filter.toLowerCase()) ||
+        req.requesterEmail.toLowerCase().includes(filter.toLowerCase())
       )
     );
+  };
 
-    // Fetch requests when the component loads
-    useEffect(() => {
-        // console.log("Session when useEffecting requestboard: ", sessionContext);
-        if (!requestsFetched) {
-            fetchRequests();
+  // Whenever we come back to this screen, remove all search params so they don't stick
+  useFocusEffect(
+    useCallback(() => {
+      router.replace({
+        pathname: "/requestBoard",
+        params: {}, // Reset all params
+      });
+
+      if (sessionContext.isLoggedIn !== 'true') {
+        router.push('/signin');
+      }
+    }, [
+      sessionContext.isLoggedIn
+    ])
+  );
+
+  // Fetch requests
+  const fetchRequests = async () => {
+    const token = sessionContext.token;
+    if (!token) return;
+
+    try {
+      const response = await fetch(REQUESTS_ENDPOINT, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          sessionToken: String(token)
         }
-    });
+      });
 
+      if (response.ok) {
+        const all_requests = await response.json();
+        const requestsArray = Object.values(all_requests) as Request[];
+        setRequests(requestsArray);
+        setFetched(true);
+      } else {
+        const data = await response.json();
+        Alert.alert('Error', data.message);
+        console.log('Error fetching: ', data);
+      }
+    } catch (error) {
+      Alert.alert('Error', 'An error occurred while fetching requests.');
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    if (!requestsFetched) {
+      fetchRequests();
+    }
+  }, [requestsFetched]);
+
+  // Create a new request
+  const handleCreateRequest = async () => {
+    const token = sessionContext.token;
+    setModalVisible(false);
+
+    if (!token) return;
+
+    try {
+      if (!newRequest.requesterEmail || !newRequest.applianceName) {
+        Alert.alert('Error', 'Please fill out all required fields');
+        return;
+      }
+
+      const response = await fetch(REQUESTS_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          sessionToken: String(token)
+        },
+        body: JSON.stringify(newRequest)
+      });
+
+      if (response.ok) {
+        Alert.alert('Success', 'Request created successfully.');
+        setRequests([...requests, newRequest]);
+
+        // Reset
+        setNewRequest({
+          requesterEmail: myEmail,
+          applianceName: '',
+          status: 'open',
+          collateral: false,
+          requestDuration: 60
+        });
+      } else {
+        const data = await response.json();
+        Alert.alert('Error', data.message);
+        console.log('Error: ', data);
+      }
+    } catch (error) {
+      Alert.alert('Error', 'An error occurred. Please try again.');
+      console.error(error);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -172,7 +164,8 @@ export default function RequestBoard() {
           <RequestList data={getFilteredRequests()} />
       </SafeAreaView>
 
-      {/* Modal to create a request */}
+
+      {/* Modal for creating new request */}
       <Modal
         visible={modalVisible}
         animationType="slide"
@@ -217,46 +210,47 @@ export default function RequestBoard() {
             />
           </View>
 
-            {/* Request Duration dropdown */}
-            <View
-              style={[
-                styles.inputContainer,
-                durationPickerOpen ? { zIndex: 2 } : { zIndex: 1 }
+          {/* Request Duration dropdown */}
+          <View
+            style={[
+              styles.inputContainer,
+              durationPickerOpen ? { zIndex: 2 } : { zIndex: 1 }
+            ]}
+          >
+            <Text style={styles.label}>Request Duration (hours):</Text>
+            <DropDownPicker
+              open={durationPickerOpen}
+              setOpen={setDurationPickerOpen}
+              value={newRequest.requestDuration as number}
+              setValue={(callback) => {
+                const selectedValue = callback(newRequest.requestDuration);
+                setNewRequest({
+                  ...newRequest,
+                  requestDuration: selectedValue
+                });
+              }}
+              items={[
+                { label: '4 hours', value: 4 },
+                { label: '8 hours', value: 8 },
+                { label: '12 hours', value: 12 },
+                { label: '24 hours', value: 24 },
+                { label: '48 hours', value: 48 }
               ]}
-            >
-              <Text style={styles.label}>Request Duration (hours):</Text>
-              <DropDownPicker
-                open={durationPickerOpen}
-                setOpen={setDurationPickerOpen}
-                value={newRequest.requestDuration as number}
-                setValue={(callback) => {
-                  const selectedValue = callback(newRequest.requestDuration);
-                  setNewRequest({
-                    ...newRequest,
-                    requestDuration: selectedValue
-                  });
-                }}
-                items={[
-                  { label: '4 hours', value: 4 },
-                  { label: '8 hours', value: 8 },
-                  { label: '12 hours', value: 12 },
-                  { label: '24 hours', value: 24 },
-                  { label: '48 hours', value: 48 }
-                ]}
-                style={styles.picker}
-                textStyle={styles.pickerText}
-                containerStyle={styles.pickerContainer}
-              />
-            </View>
-            <Button title="Submit Request" onPress={handleCreateRequest} />
-            <Button title="Cancel" onPress={() => setModalVisible(false)} />
+              style={styles.picker}
+              textStyle={styles.pickerText}
+              containerStyle={styles.pickerContainer}
+            />
           </View>
+
+          <Button title="Submit Request" onPress={handleCreateRequest} />
+          <Button title="Cancel" onPress={() => setModalVisible(false)} />
+        </View>
       </Modal>
     </View>
-    );
+  );
 }
 
-// Styles
+// -------------- STYLES --------------
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -277,14 +271,6 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     marginBottom: 10,
     paddingLeft: 10
-  },
-  requestCard: {
-    backgroundColor: '#f7f7f7',
-    padding: 15,
-    marginBottom: 10,
-    borderRadius: 6,
-    alignSelf: 'center',
-    width: '90%'
   },
   title: {
     fontSize: 18,
