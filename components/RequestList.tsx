@@ -9,6 +9,15 @@ type Props = {
 
 const RequestList: React.FC<Props> = ({ data }) => {
     const router = useRouter();
+    const handleOpenChat = (someEmail: string) => {
+        router.push({
+          pathname: '/chatScreen',
+          params: {
+            fromRequestBoard: 'true',
+            email: someEmail
+          }
+        });
+      };
 
     const renderItem = ({ item }: { item: Request }) => (
         <View style={styles.card}>
@@ -26,15 +35,10 @@ const RequestList: React.FC<Props> = ({ data }) => {
 
             {/* Chat Button */}
             <TouchableOpacity
-                style={styles.chatButton}
-                onPress={() => {
-                    router.push({
-                        pathname: '/chatScreen',  
-                        params: { email: item.requesterEmail },
-                    });
-                }}
+              style={styles.chatButton}
+              onPress={() => handleOpenChat(item.requesterEmail)}
             >
-            <Text style={styles.chatButtonText}>Chat with Requester</Text>
+              <Text style={{ color: '#fff' }}>Chat with Requester</Text>
             </TouchableOpacity>
         </View>
     );
@@ -81,10 +85,6 @@ const styles = StyleSheet.create({
         padding: 10,
         borderRadius: 8,
         alignItems: 'center',
-    },
-    chatButtonText: {
-        color: '#fff',
-        fontSize: 16,
     },
 });
 

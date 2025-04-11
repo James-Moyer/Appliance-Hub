@@ -1,17 +1,6 @@
 import React, { useEffect, useState, useContext } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  FlatList,
-  TouchableOpacity,
-  StyleSheet
-} from "react-native";
-import {
-  useLocalSearchParams,
-  useFocusEffect,
-  useRouter
-} from "expo-router";
+import { View, Text, TextInput, FlatList, TouchableOpacity, StyleSheet } from "react-native";
+import { useLocalSearchParams, useFocusEffect, useRouter } from "expo-router";
 import { Appbar } from "react-native-paper";
 
 import { SessionContext } from "@/helpers/sessionContext";
@@ -40,8 +29,16 @@ export default function ChatScreen() {
     email?: string;
   }>();
 
+  const { fromApplianceBoard, owner } = useLocalSearchParams<{
+    fromApplianceBoard?: string;
+    owner?: string;
+  }>();
+
   // Local boolean that says if we came from the requestBoard
   const [cameFromRB, setCameFromRB] = useState(false);
+
+  // Local boolean that says if we came from applianceBoard
+  const [cameFromAB, setCameFromAB] = useState(false);
 
   const { sessionContext } = useContext(SessionContext);
   const [myUid, setMyUid] = useState("");
@@ -63,24 +60,47 @@ export default function ChatScreen() {
     loadAllUsers();
   }, []);
 
-  // If fromRequestBoard == "true", set cameFromRB = true each time we refocus.
-  // Also, if there's an email param, auto-select that user once allUsers is loaded.
-  // On screen blur/unmount => reset cameFromRB
+  // If fromRequestBoard == "true", set cameFromRB = true each time we refocus; same for fromApplianceBoard
+  // Also, if there's an email param or owner param, auto-select that user once allUsers is loaded.
+  // On screen blur/unmount => reset cameFromRB, cameFromAB
   useFocusEffect(
     React.useCallback(() => {
+      console.log("useFocusEffect triggered");
+      console.log("fromRequestBoard:", fromRequestBoard);
+      console.log("email:", email);
+      console.log("fromApplianceBoard:", fromApplianceBoard);
+      console.log("owner:", owner);
+      
+      // did we come from anywhere?
       setCameFromRB(fromRequestBoard === "true");
-
-      if (email && allUsers.length > 0) {
+      setCameFromAB(fromApplianceBoard === "true");
+      
+      // case when we came from requestBoard
+      if (fromRequestBoard && allUsers.length > 0) {
         const found = allUsers.find(u => u.email === email);
         if (found) {
           selectUser(found);
         }
+        return;
+      }
+      
+      // case when we came from applianceBoard
+      if (fromApplianceBoard && allUsers.length > 0) {
+        const foundOwner = allUsers.find(u => u.email === owner);
+        if (foundOwner) {
+          selectUser(foundOwner);
+        }
       }
 
       return () => {
+        // router.replace({
+        //   pathname: "/chatScreen",
+        //   params: {},
+        // });
         setCameFromRB(false);
+        setCameFromAB(false);
       };
-    }, [fromRequestBoard, email, allUsers])
+    }, [fromRequestBoard, fromApplianceBoard, owner, email, allUsers])
   );
 
   async function loadAllUsers() {
@@ -177,30 +197,27 @@ export default function ChatScreen() {
     }
   }
 
-  /**
-   * handleBackPress:
-   *  1) If we came from RB, forcibly remove that param from the route so it's "false"
-   *     then push to "/requestBoard".
-   *  2) If we are currently in a chat, unselect => show local user list
-   *  3) Otherwise, do normal router.back()
-   */
-  function handleBackPress() {
+  
+  async function handleBackPress() {
+    // Clear all params when navigating back
+    router.replace({
+      pathname: "/chatScreen",
+      params: {},
+    });
+    
+    // Reset states based on where we came from
     if (cameFromRB) {
-      // First: forcibly remove the "true" param from the route so it doesn't stick
-      router.replace({
-        pathname: "/chatScreen", // or the correct path, e.g. "/(pages)/chatScreen"
-        params: { fromRequestBoard: "false" } 
-      });
-      // Then set the local boolean to false
-      setCameFromRB(false);
-
-      // Finally, push to requestBoard
-      router.push("/requestBoard"); // or the correct path if it's "/(pages)/requestBoard"
+      router.push("/requestBoard");
+    } else if (cameFromAB) {
+      router.push("/applianceBoard");
     } else if (selectedUser) {
       setSelectedUser(null);
     } else {
       router.back();
     }
+
+    setCameFromAB(false);
+    setCameFromRB(false);
   }
 
   // If no user => show user list

@@ -1,27 +1,15 @@
 import React, { useState, useEffect, useCallback, useContext } from 'react';
-import {
-  SafeAreaView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-  Button,
-  Modal,
-  Alert,
-  TouchableOpacity
-} from 'react-native';
+import { SafeAreaView, StyleSheet, Text, TextInput, View, Button, Modal, Alert } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { Request } from '../../types/types';
 import RequestList from '../../components/RequestList';
-import { useRouter, useFocusEffect, useLocalSearchParams, usePathname } from 'expo-router';
+import { useRouter, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { REQUESTS_ENDPOINT } from '../../constants/constants';
 import { SessionContext } from '@/helpers/sessionContext';
 
 export default function RequestBoard() {
-  // 1) Hooks from Expo Router
   const router = useRouter();
-  const pathname = usePathname();                    // e.g. "/requestBoard"
-  const searchParams = useLocalSearchParams();       // renamed from useSearchParams
+  const searchParams = useLocalSearchParams();
 
   const [filter, setFilter] = useState('');
   const [requests, setRequests] = useState<Request[]>([]);
@@ -57,27 +45,19 @@ export default function RequestBoard() {
     );
   };
 
-  // Whenever we come back to this screen, remove "fromRequestBoard" if it exists,
-  // so it won't "stick" for subsequent navigations.
+  // Whenever we come back to this screen, remove all search params so they don't stick
   useFocusEffect(
     useCallback(() => {
-      if (searchParams.fromRequestBoard === "true") {
-        const { fromRequestBoard, ...rest } = searchParams;
-        // Now remove "fromRequestBoard" by calling router.replace:
-        router.replace({
-          pathname:"/requestBoard",
-          params: rest
-        });
-      }
+      router.replace({
+        pathname: "/requestBoard",
+        params: {}, // Reset all params
+      });
 
-      // Also ensure the user is logged in:
       if (sessionContext.isLoggedIn !== 'true') {
         router.push('/signin');
       }
     }, [
-      searchParams.fromRequestBoard,
       sessionContext.isLoggedIn
-      // include pathname, router in dependencies if linter complains
     ])
   );
 
@@ -162,17 +142,6 @@ export default function RequestBoard() {
     }
   };
 
-  // Navigate to chatScreen with fromRequestBoard = "true" (as a string)
-  const handleOpenChat = (someEmail: string) => {
-    router.push({
-      pathname: '/chatScreen',
-      params: {
-        fromRequestBoard: 'true',
-        email: someEmail
-      }
-    });
-  };
-
   return (
     <View style={styles.container}>
       <Text style={styles.headerText}>Requests</Text>
@@ -190,22 +159,11 @@ export default function RequestBoard() {
 
       <Button title="Refresh" onPress={fetchRequests} />
 
+      {/* Request List */}
       <SafeAreaView style={styles.container}>
-        {getFilteredRequests().map((req, i) => (
-          <View key={`${req.requesterEmail}-${i}`} style={styles.requestCard}>
-            <Text style={styles.title}>Requester: {req.requesterEmail}</Text>
-            <Text>Appliance: {req.applianceName}</Text>
-            <Text>Status: {req.status}</Text>
-
-            <TouchableOpacity
-              style={styles.chatButton}
-              onPress={() => handleOpenChat(req.requesterEmail)}
-            >
-              <Text style={{ color: '#fff' }}>Chat with Requester</Text>
-            </TouchableOpacity>
-          </View>
-        ))}
+          <RequestList data={getFilteredRequests()} />
       </SafeAreaView>
+
 
       {/* Modal for creating new request */}
       <Modal
@@ -314,24 +272,10 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     paddingLeft: 10
   },
-  requestCard: {
-    backgroundColor: '#f7f7f7',
-    padding: 15,
-    marginBottom: 10,
-    borderRadius: 6,
-    alignSelf: 'center',
-    width: '90%'
-  },
   title: {
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 4
-  },
-  chatButton: {
-    backgroundColor: '#007AFF',
-    padding: 8,
-    marginTop: 8,
-    borderRadius: 5
   },
   modalContainer: {
     flex: 1,
