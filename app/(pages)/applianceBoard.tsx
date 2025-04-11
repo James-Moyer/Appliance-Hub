@@ -141,7 +141,7 @@ export default function App() {
 
             {/* Search Bar */}
             <TextInput
-                style={styles.searchBar}
+                style={[styles.searchBar, styles.verticalMargin]}
                 placeholder="Search for owner, name, lendTo, or date..."
                 placeholderTextColor="#555"
                 value={filter}
@@ -230,12 +230,16 @@ export default function App() {
                         style={styles.picker}
                         textStyle={styles.pickerText}
                     />
+                    
+                    {/* Submit button */}
+                    <View style={styles.verticalMargin}>
+                        <Button title="List Appliance" onPress={handleCreateAppliance} />
+                    </View>
 
-                    {/* Submit Button */}
-                    <Button title="List Appliance" onPress={handleCreateAppliance} />
-
-                    {/* Close Button */}
-                    <Button title="Cancel" onPress={() => setModalVisible(false)} />
+                    {/* Cancel button */}
+                    <View style={styles.verticalMargin}>
+                        <Button title="Cancel" onPress={() => setModalVisible(false)} />
+                    </View>
                 </View>
             </Modal>
         </View>
@@ -299,5 +303,8 @@ const styles = StyleSheet.create({
     pickerText: {
         color: '#555',
     },
+    verticalMargin: {
+        marginVertical: 10,
+    }
 });
 
