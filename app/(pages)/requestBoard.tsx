@@ -150,7 +150,7 @@ export default function RequestBoard() {
 
       {/* Filter / Search bar */}
       <TextInput
-        style={styles.searchBar}
+        style={[styles.searchBar, styles.verticalMargin]}
         placeholder="Search by appliance or requester email..."
         placeholderTextColor="#555"
         value={filter}
@@ -241,9 +241,17 @@ export default function RequestBoard() {
               containerStyle={styles.pickerContainer}
             />
           </View>
+          
+          {/* Submit button */}
+          <View style={styles.verticalMargin}>
+            <Button title="Submit Request" onPress={handleCreateRequest} />
+          </View>
 
-          <Button title="Submit Request" onPress={handleCreateRequest} />
-          <Button title="Cancel" onPress={() => setModalVisible(false)} />
+          {/* Cancel button */}
+          <View style={styles.verticalMargin}>
+            <Button title="Cancel" onPress={() => setModalVisible(false)} />
+          </View>
+
         </View>
       </Modal>
     </View>
@@ -318,5 +326,8 @@ const styles = StyleSheet.create({
   },
   pickerText: {
     color: '#555'
+  },
+  verticalMargin: {
+    marginVertical: 10,
   }
 });
