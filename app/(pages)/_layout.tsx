@@ -49,12 +49,6 @@ export default function Layout() {
           drawerItemStyle: { display: 'none' }
         }}
         />
-        <Drawer.Screen
-        name = "profile_page_MOVED_TO_INDEX"
-        options={{
-          drawerItemStyle: { display: 'none' }
-        }}
-        />
       </Drawer>
     </GestureHandlerRootView>
   );

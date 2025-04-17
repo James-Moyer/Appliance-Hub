@@ -13,10 +13,12 @@ import { saveInStore, removeFromStore } from '../../helpers/keyfetch'; // local 
 import { useFocusEffect, useRouter } from 'expo-router';
 import { SessionContext } from '@/helpers/sessionContext';
 import { USERS_ENDPOINT } from '../../constants/constants';
+import { auth } from '../firebase/firebaseConfig';
 
 interface UserData {
   username?: string;
   email?: string;
+  emailVerified?: boolean;
   location?: string;
   floor?: number;
   showDorm?: boolean;
@@ -66,36 +68,41 @@ const ProfilePage: React.FC = () => {
     setEditing(!editing);
   };
 
+  const checkUserVerified = async () => {
+    if (auth.currentUser) {
+      await auth.currentUser.reload();
+      const isVerified = auth.currentUser?.emailVerified ?? false;
+      setUser((prev) => ({ ...prev, emailVerified: isVerified }));
+    }
+  }
+
   const getResponse = async () => {
-    // console.log("Loading profile page, requesting user info");
-    // console.log("Token: ", sessionContext.sessionToken);
     const uid = sessionContext.UID;
-    if (sessionContext?.UID) {
-      const response = await fetch(`${USERS_ENDPOINT}/byuid/${uid}`, { // If running on an emulator, use 'http://{ip_address}:3000/request'
+    if (uid) {
+      const response = await fetch(`${USERS_ENDPOINT}/byuid/${uid}`, {
         method: 'GET',
         headers: {
-            'Content-Type': 'application/json',
-            'sessionToken': sessionContext.token,
-        }
+          'Content-Type': 'application/json',
+          sessionToken: sessionContext.token,
+        },
       });
-
+  
       if (response.ok) {
         const returnedData = await response.json();
         console.log("Returned data: ", returnedData);
-        setUser(returnedData);
-        setFetched(true);
-        // set initial edits
+  
+        checkUserVerified();
+  
+        setUser({
+          ...returnedData,
+        });
+  
         setEditedUsername(returnedData.username || '');
         setEditedLocation(returnedData.location || '');
         setEditedFloor(returnedData.floor?.toString() || '');
-      } else {
-        // If info not returned
-        const errMsg = await response.json();
-        Alert.alert('Error fetching user', errMsg?.message || 'Unknown error');
-        console.log("Response no good!");
+  
+        setFetched(true);
       }
-    } else {
-      return null;
     }
   };
 
@@ -133,10 +140,41 @@ const ProfilePage: React.FC = () => {
         Alert.alert('Success', 'Profile updated successfully!');
         // Re‑fetch or just locally update:
         setUser((prev) => ({ ...prev, ...updateData }));
+        checkUserVerified();
         setEditing(false);
       }
     } catch (error: any) {
       Alert.alert('Update Error', error.message);
+    }
+  };
+
+  const handleSendVerificationEmail = async () => {
+    try {
+      const email = user.email;
+      const token = sessionContext.token;
+  
+      if (!email || !token) {
+        Alert.alert('Error', 'User not logged in.');
+        return;
+      }
+  
+      const response = await fetch(`${USERS_ENDPOINT}/send-verification-link`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          sessionToken: token,
+        },
+        body: JSON.stringify({ email }),
+      });
+  
+      if (response.ok) {
+        Alert.alert('Success', 'Verification email sent. Please check your inbox.');
+      } else {
+        const errorData = await response.json();
+        Alert.alert('Error', errorData.message || 'Failed to send email');
+      }
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Something went wrong');
     }
   };
 
@@ -188,7 +226,7 @@ const ProfilePage: React.FC = () => {
               {user.username || 'Loading...'}
             </Text>
             <Text style={styles.email}>
-              {user.email || 'No email'}
+              {user.email || 'No email'} {user.emailVerified ? '(Verified)' : '(Not Verified)'}
             </Text>
             <Text style={styles.detail}>
               Dorm: {user.location ?? 'N/A'} / Floor: {user.floor ?? 'N/A'}
@@ -226,6 +264,14 @@ const ProfilePage: React.FC = () => {
             <Text style={styles.buttonText}>Edit Profile</Text>
           </TouchableOpacity> : null
         )}
+        {infoFetched && !user.emailVerified ? (
+          <TouchableOpacity
+            style={[styles.button, { backgroundColor: '#f0ad4e', marginTop: 10 }]}
+            onPress={handleSendVerificationEmail}
+          >
+            <Text style={styles.buttonText}>Send Verification Email</Text>
+          </TouchableOpacity>
+        ) : null}
         {infoFetched ? <TouchableOpacity style={styles.logout} onPress={logout}>
           <Text style={styles.buttonText}>Log Out</Text>
         </TouchableOpacity> : null}
