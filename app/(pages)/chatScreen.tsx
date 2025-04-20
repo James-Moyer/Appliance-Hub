@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext } from "react";
-import { View, Text, TextInput, FlatList, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, TextInput, FlatList, TouchableOpacity, StyleSheet, Alert } from "react-native";
 import { useLocalSearchParams, useFocusEffect, useRouter } from "expo-router";
 import { Appbar } from "react-native-paper";
 
@@ -115,21 +115,21 @@ export default function ChatScreen() {
         },
       });
 
-      if (!response.ok) {
-        console.error("Failed to fetch user list");
-        return;
+      const data = await response.json();
+      if (response.ok) {
+        const userArray = Object.values(data) as UserType[];
+        setAllUsers(userArray.filter(u => u.uid !== myUid));
+      } else {
+        Alert.alert("Error", data.message);
       }
 
-      const data = await response.json();
-      const userArray = Object.values(data) as UserType[];
-      setAllUsers(userArray.filter(u => u.uid !== myUid));
     } catch (err) {
+      Alert.alert("Error", "Failed to load users");
       console.error("Error loading users:", err);
     }
   }
 
   async function selectUser(user: UserType) {
-    setSelectedUser(user);
     setMessages([]);
 
     try {
@@ -144,14 +144,17 @@ export default function ChatScreen() {
         },
       });
 
-      if (!response.ok) {
+      const data = await response.json();
+      if (response.ok) {
+        setSelectedUser(user);
+        setMessages(data);
+      } else {
+        Alert.alert("Error", data.message);
         console.error("Failed to fetch messages");
-        return;
       }
 
-      const data = await response.json();
-      setMessages(data);
     } catch (err) {
+      Alert.alert("Error", "Failed to load messages");
       console.error("Error loading messages:", err);
     }
   }
@@ -179,20 +182,23 @@ export default function ChatScreen() {
         body: JSON.stringify(bodyData),
       });
 
-      if (!response.ok) {
+      if (response.ok) {
+        const newMessage: MessageType = {
+          senderUid: myUid,
+          recipientUid: selectedUser.uid,
+          text: textToSend,
+          timestamp: Date.now(),
+        };
+        setMessages((prev) => [...prev, newMessage]);
+        setInput("");
+      } else {
+        Alert.alert("Message failed to send, pelase try again");
         console.error("Failed to send message");
-        return;
       }
 
-      const newMessage: MessageType = {
-        senderUid: myUid,
-        recipientUid: selectedUser.uid,
-        text: textToSend,
-        timestamp: Date.now(),
-      };
-      setMessages((prev) => [...prev, newMessage]);
-      setInput("");
+      
     } catch (err) {
+      Alert.alert("Error", "Error sending message, please try again");
       console.error("Error sending message:", err);
     }
   }

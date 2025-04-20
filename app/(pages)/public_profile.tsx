@@ -69,12 +69,11 @@ export default function PublicProfile() {
           }
         });
 
+        const data = await response.json();
         if (!response.ok) {
-          const errMsg = await response.json();
-          Alert.alert('Error fetching user', errMsg.message || 'Unknown error');
+          Alert.alert('Error fetching user', data.message || 'Unknown error');
         } else {
-          const userData = await response.json();
-          setUser(userData);
+          setUser(data);
         }
       } catch (error: any) {
         Alert.alert('Fetch Error', error.message);
