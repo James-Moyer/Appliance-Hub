@@ -44,8 +44,9 @@ export default function App() {
                 if (response.ok) {
                     const appliancesData = await response.json();
                     setAppliances(Object.values(appliancesData)); 
+                } else {
                     const data = await response.json();
-                    Alert.alert('Error', data.message);
+                    Alert.alert('Error', data.message || 'Failed to fetch appliances.');
                 }
             } catch (error) {
                 Alert.alert('Error', 'An error occurred while fetching appliances.');
