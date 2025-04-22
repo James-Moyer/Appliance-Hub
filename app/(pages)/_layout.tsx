@@ -27,6 +27,13 @@ export default function Layout() {
           options={{
             drawerLabel: 'Requests',
             title: 'Request Board',
+            headerStyle: {
+              backgroundColor: '#588157',
+            },
+            headerTitleStyle: {
+              color: '#FFF', 
+            },
+            headerTitleAlign: 'center',
           }}
         />
         <Drawer.Screen

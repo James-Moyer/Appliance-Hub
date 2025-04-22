@@ -95,12 +95,7 @@ export default function PublicProfile() {
   return (
     <View style={styles.container}>
       <View style={styles.card}>
-        <Image
-          source={{
-            uri: 'https://i.pinimg.com/736x/2f/15/f2/2f15f2e8c688b3120d3d26467b06330c.jpg'
-          }}
-          style={styles.profileImage}
-        />
+        
 
         <Text style={styles.name}>
           {user.username || 'No username'}
@@ -126,11 +121,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',    // Vertically centers the card
     alignItems: 'center',        // Horizontally centers the card
     paddingHorizontal: 10,
-    backgroundColor: '#90BE6D',  // Same as the Profile Page background color
+    backgroundColor: '#588157',  // Same as the Profile Page background color
   },
   card: {
     width: '90%',                // Responsive width for mobile and web
-    backgroundColor: '#FFE2D1',   // Profile card background color
+    backgroundColor: '#FFF',   // Profile card background color
     borderRadius: 16,
     padding: 30,
     alignItems: 'center',        // Centers child elements

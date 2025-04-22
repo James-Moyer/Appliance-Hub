@@ -17,7 +17,6 @@ export default function RequestBoard() {
 
   const myEmail = sessionContext.email;
 
-  // For creating a new request:
   const [modalVisible, setModalVisible] = useState(false);
   const [newRequest, setNewRequest] = useState<Request>({
     requesterEmail: myEmail,
@@ -27,14 +26,10 @@ export default function RequestBoard() {
     requestDuration: 60
   });
 
-  // For the two dropdown pickers:
   const [collateralPickerOpen, setCollateralPickerOpen] = useState(false);
   const [durationPickerOpen, setDurationPickerOpen] = useState(false);
-
-  // So we don't fetch requests multiple times:
   const [requestsFetched, setFetched] = useState(false);
 
-  // Filter out requests from the current user, plus the text filter:
   const getFilteredRequests = () => {
     return requests.filter((req) =>
       req.requesterEmail !== myEmail &&
@@ -45,23 +40,19 @@ export default function RequestBoard() {
     );
   };
 
-  // Whenever we come back to this screen, remove all search params so they don't stick
   useFocusEffect(
     useCallback(() => {
       router.replace({
         pathname: "/requestBoard",
-        params: {}, // Reset all params
+        params: {},
       });
 
       if (sessionContext.isLoggedIn !== 'true') {
         router.push('/signin');
       }
-    }, [
-      sessionContext.isLoggedIn
-    ])
+    }, [sessionContext.isLoggedIn])
   );
 
-  // Fetch requests
   const fetchRequests = async () => {
     const token = sessionContext.token;
     if (!token) return;
@@ -97,7 +88,6 @@ export default function RequestBoard() {
     }
   }, [requestsFetched]);
 
-  // Create a new request
   const handleCreateRequest = async () => {
     const token = sessionContext.token;
     setModalVisible(false);
@@ -123,7 +113,6 @@ export default function RequestBoard() {
         Alert.alert('Success', 'Request created successfully.');
         setRequests([...requests, newRequest]);
 
-        // Reset
         setNewRequest({
           requesterEmail: myEmail,
           applianceName: '',
@@ -144,28 +133,36 @@ export default function RequestBoard() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.headerText}>Requests</Text>
+      <View style={styles.topSection}>
+        <Text style={styles.headerText}>Requests</Text>
 
-      <Button title="Create Request" onPress={() => setModalVisible(true)} />
+          <View style={styles.buttonRow}>
+            <View style={styles.buttonWrapper}>
+              <Button
+                title="Create Request"
+                color="#3a5a40"
+                onPress={() => setModalVisible(true)}
+              />
+            </View>
+            <View style={styles.buttonWrapper}>
+              <Button title="Refresh" color="#3a5a40" onPress={fetchRequests} />
+            </View>
+          </View>
 
-      {/* Filter / Search bar */}
-      <TextInput
-        style={[styles.searchBar, styles.verticalMargin]}
-        placeholder="Search by appliance or requester email..."
-        placeholderTextColor="#555"
-        value={filter}
-        onChangeText={setFilter}
-      />
+          <TextInput
+            style={[styles.searchBar, styles.verticalMargin]}
+            placeholder="Search by appliance or requester email..."
+            placeholderTextColor="#ccc"
+            value={filter}
+            onChangeText={setFilter}
+          />
 
-      <Button title="Refresh" onPress={fetchRequests} />
+      </View>
 
-      {/* Request List */}
-      <SafeAreaView style={styles.container}>
-          <RequestList data={getFilteredRequests()} />
+      <SafeAreaView style={styles.listSection}>
+        <RequestList data={getFilteredRequests()} />
       </SafeAreaView>
 
-
-      {/* Modal for creating new request */}
       <Modal
         visible={modalVisible}
         animationType="slide"
@@ -184,7 +181,6 @@ export default function RequestBoard() {
             }
           />
 
-          {/* Collateral dropdown */}
           <View
             style={[
               styles.inputContainer,
@@ -210,7 +206,6 @@ export default function RequestBoard() {
             />
           </View>
 
-          {/* Request Duration dropdown */}
           <View
             style={[
               styles.inputContainer,
@@ -241,17 +236,14 @@ export default function RequestBoard() {
               containerStyle={styles.pickerContainer}
             />
           </View>
-          
-          {/* Submit button */}
+
           <View style={styles.verticalMargin}>
-            <Button title="Submit Request" onPress={handleCreateRequest} />
+            <Button color="#344e41" title="Submit Request" onPress={handleCreateRequest} />
           </View>
 
-          {/* Cancel button */}
           <View style={styles.verticalMargin}>
-            <Button title="Cancel" onPress={() => setModalVisible(false)} />
+            <Button color="#344e41" title="Cancel" onPress={() => setModalVisible(false)} />
           </View>
-
         </View>
       </Modal>
     </View>
@@ -262,58 +254,83 @@ export default function RequestBoard() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center'
+    backgroundColor: '#F5F5F5',
+  },
+  topSection: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 10,
+    paddingTop: 10,
+    paddingBottom: 0,
+    paddingHorizontal: 20,
+    backgroundColor: '#588157',
+    alignItems: 'center',
+    elevation: 5, // optional for Android shadow
+    shadowColor: '#000', // optional for iOS shadow
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+  },  
+  listSection: {
+    flex: 1,
+    backgroundColor: '#F5F5F5',
+    width: '80%',
+    alignItems: 'center',
+    marginLeft: 35,
+    paddingTop: 150, 
   },
   headerText: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: 'bold',
-    marginTop: 10,
-    marginBottom: 10
+    marginBottom: 10,
+    color: '#FFF'
   },
   searchBar: {
     height: 40,
-    width: '90%',
-    borderColor: '#ccc',
+    width: '100%',
+    borderColor: '#dad7cd',
     borderWidth: 1,
     borderRadius: 5,
-    marginBottom: 10,
-    paddingLeft: 10
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 4
+    marginBottom: 12,
+    paddingLeft: 10,
+    backgroundColor: '#fff',
+    color: '#000'
   },
   modalContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    padding: 20
+    backgroundColor: '#588157',
+    padding: 20,
   },
   modalTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 20
+    marginBottom: 20,
+    color: "#fff",
   },
   inputContainer: {
     width: '90%',
-    marginBottom: 10
+    marginBottom: 10,
+    color: "#fff"
   },
   label: {
-    fontSize: 16,
+    fontSize: 18,
     marginBottom: 5,
-    color: '#333'
+    color: '#fff'
   },
   input: {
     height: 40,
     width: '90%',
-    borderColor: '#ccc',
+    borderColor: '#fff',
     borderWidth: 1,
     borderRadius: 5,
     marginBottom: 10,
-    paddingLeft: 10
+    paddingLeft: 10,
+    backgroundColor: '#fff'
+
   },
   pickerContainer: {
     width: '90%',
@@ -329,5 +346,15 @@ const styles = StyleSheet.create({
   },
   verticalMargin: {
     marginVertical: 10,
-  }
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginBottom: 0,
+  },
+  buttonWrapper: {
+    flex: 1,
+    marginHorizontal: 5,
+  },  
 });

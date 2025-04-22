@@ -58,7 +58,7 @@ const styles = StyleSheet.create({
         padding: 16,
     },
     card: {
-        backgroundColor: '#f9f9f9',
+        backgroundColor: '#F9F9F9',
         padding: 16,
         marginBottom: 12,
         borderRadius: 8,
@@ -69,9 +69,10 @@ const styles = StyleSheet.create({
         elevation: 2, // for Android
     },
     title: {
-        fontSize: 18,
+        fontSize: 20,
         fontWeight: 'bold',
         marginBottom: 4,
+        color: "#000"
     },
     requesterText: {
         color: 'blue',
@@ -81,7 +82,7 @@ const styles = StyleSheet.create({
     },
     chatButton: {
         marginTop: 10,
-        backgroundColor: '#007AFF',
+        backgroundColor: 'blue',
         padding: 10,
         borderRadius: 8,
         alignItems: 'center',
