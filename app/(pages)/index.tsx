@@ -1,36 +1,17 @@
-import React, { useEffect, useState, useContext, useCallback } from 'react';
-import {
-  View,
-  Text,
-  Image,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  Alert,
-  ActivityIndicator,
-} from 'react-native';
+import React, { useEffect, useState, useContext } from 'react';
+import { Alert } from 'react-native';
 import { saveInStore, removeFromStore } from '../../helpers/keyfetch'; // local storage helpers
-import { useFocusEffect, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { SessionContext } from '@/helpers/sessionContext';
 import { USERS_ENDPOINT } from '../../constants/constants';
 import { auth } from '../firebase/firebaseConfig';
-
-interface UserData {
-  username?: string;
-  email?: string;
-  emailVerified?: boolean;
-  location?: string;
-  floor?: number;
-  showDorm?: boolean;
-  showFloor?: boolean;
-  [key: string]: any; // allow other optional props
-}
+import { UserData } from '../../types/types';
+import ProfileView from '../../components/views/ProfileView';
 
 const ProfilePage: React.FC = () => {
   const router = useRouter();
 
   const { sessionContext, setContext }  = useContext(SessionContext);
-
   const [user, setUser] = useState<UserData>({});
   const [editing, setEditing] = useState<boolean>(false);
   const [infoFetched, setFetched] = useState(false);
@@ -40,6 +21,7 @@ const ProfilePage: React.FC = () => {
   const [editedLocation, setEditedLocation] = useState('');
   const [editedFloor, setEditedFloor] = useState('');
   
+  // function to log out
   const logout = async() => {
     // console.log("logging out..");
     let res1 = await removeFromStore("sessionToken");
@@ -64,10 +46,12 @@ const ProfilePage: React.FC = () => {
     router.push("/" as any);
   };
 
+  // function to indicate when the user has clicked the edit button
   const handleEditToggle = () => {
     setEditing(!editing);
   };
 
+  // function to check if the user is verified
   const checkUserVerified = async () => {
     if (auth.currentUser) {
       await auth.currentUser.reload();
@@ -76,6 +60,7 @@ const ProfilePage: React.FC = () => {
     }
   }
 
+  // function to get the user data from the server
   const getResponse = async () => {
     const uid = sessionContext.UID;
     if (uid) {
@@ -106,6 +91,7 @@ const ProfilePage: React.FC = () => {
     }
   };
 
+  // function to handle account deletion
   const handleDeleteAccount = () => {
     Alert.alert(
       "Are you sure?",
@@ -152,6 +138,7 @@ const ProfilePage: React.FC = () => {
     );
   };
 
+  // function to handle saving the edited user data
   const handleSave = async () => {
     try {
       const uid = sessionContext.UID;
@@ -194,6 +181,7 @@ const ProfilePage: React.FC = () => {
     }
   };
 
+  // function to send verification email
   const handleSendVerificationEmail = async () => {
     try {
       const email = user.email;
@@ -224,10 +212,8 @@ const ProfilePage: React.FC = () => {
     }
   };
 
+  // get info if not already done when the component mounts
   useEffect(() => {
-    // console.log("Session when useEffecting profile page: ", sessionContext);
-    // console.log("Session in profile page: ", sessionContext);
-    // console.log("user: ", user);
     if (!infoFetched) { // Just check to see if values have been populated yet
       console.log("user data not yet fetched, grabbing it now");
       getResponse();
@@ -235,182 +221,22 @@ const ProfilePage: React.FC = () => {
   }, [infoFetched]);
 
   return (
-    <View style={styles.container}>
-      <View style={styles.card}>
-        <Image
-          source={{
-            uri: 'https://i.pinimg.com/736x/2f/15/f2/2f15f2e8c688b3120d3d26467b06330c.jpg',
-          }}
-          style={styles.profileImage}
-        />
-
-        {editing ? (
-          <>
-            <TextInput
-              style={styles.editInput}
-              placeholder="Username"
-              value={editedUsername}
-              onChangeText={setEditedUsername}
-            />
-            <TextInput
-              style={styles.editInput}
-              placeholder="Location (Sandburg East, etc.)"
-              value={editedLocation}
-              onChangeText={setEditedLocation}
-            />
-            <TextInput
-              style={styles.editInput}
-              placeholder="Floor"
-              value={editedFloor}
-              onChangeText={setEditedFloor}
-              keyboardType="numeric"
-            />
-          </>
-        ) : (
-          <>
-            <Text style={styles.name}>
-              {user.username || 'Loading...'}
-            </Text>
-            <Text style={styles.email}>
-              {user.email || 'No email'} {user.emailVerified ? '(Verified)' : '(Not Verified)'}
-            </Text>
-            <Text style={styles.detail}>
-              Dorm: {user.location ?? 'N/A'} / Floor: {user.floor ?? 'N/A'}
-            </Text>
-          </>
-        )}
-
-        {editing ? (
-          <View style={{ marginTop: 20 }}>
-            <TouchableOpacity
-              style={[styles.button, { backgroundColor: 'green' }]}
-              onPress={handleSave}
-            >
-              <Text style={styles.buttonText}>Save</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.button, { backgroundColor: 'gray', marginTop: 10 }]}
-              onPress={() => {
-                // revert changes
-                setEditedUsername(user.username || '');
-                setEditedLocation(user.location || '');
-                setEditedFloor(user.floor?.toString() || '');
-                setEditing(false);
-              }}
-            >
-              <Text style={styles.buttonText}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          infoFetched ? <TouchableOpacity
-            style={[styles.button, { backgroundColor: '#007bff', marginTop: 20 }]}
-            onPress={handleEditToggle}
-          >
-            <Text style={styles.buttonText}>Edit Profile</Text>
-          </TouchableOpacity> : null
-        )}
-        {infoFetched && !user.emailVerified ? (
-          <TouchableOpacity
-            style={[styles.button, { backgroundColor: '#f0ad4e', marginTop: 10 }]}
-            onPress={handleSendVerificationEmail}
-          >
-            <Text style={styles.buttonText}>Send Verification Email</Text>
-          </TouchableOpacity>
-        ) : null}
-        {infoFetched ? <TouchableOpacity style={styles.logout} onPress={logout}>
-          <Text style={styles.buttonText}>Log Out</Text>
-        </TouchableOpacity> : null}
-
-        {infoFetched ? (
-          <TouchableOpacity
-            style={[styles.button, { backgroundColor: '#8B0000', marginTop: 10 }]}
-            onPress={handleDeleteAccount}
-          >
-            <Text style={styles.buttonText}>Delete Account</Text>
-          </TouchableOpacity>
-        ) : null}
-
-      </View>
-    </View>
+    <ProfileView
+      user={user}
+      editing={editing}
+      editedUsername={editedUsername}
+      editedLocation={editedLocation}
+      editedFloor={editedFloor}
+      setEditedUsername={setEditedUsername}
+      setEditedLocation={setEditedLocation}
+      setEditedFloor={setEditedFloor}
+      handleSave={handleSave}
+      handleEditToggle={handleEditToggle}
+      handleSendVerificationEmail={handleSendVerificationEmail}
+      handleDeleteAccount={handleDeleteAccount}
+      logout={logout}
+    />
   );
-};
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',        
-    alignItems: 'center',            
-    paddingHorizontal: 10,
-    backgroundColor: '#90BE6D',
-  },
-  card: {
-    width: '90%',                     
-    backgroundColor: '#FFE2D1',
-    height: '75%',                   
-    borderRadius: 16,
-    padding: 30,
-    alignItems: 'center',             
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-  },
-  profileImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    marginBottom: 10,
-    alignSelf: 'center',              
-  },
-  name: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginVertical: 5,
-    textAlign: 'center',
-  },
-  email: {
-    fontSize: 16,
-    marginBottom: 10,
-    color: '#666',
-    textAlign: 'center',
-  },
-  detail: {
-    fontSize: 16,
-    color: '#555',
-    marginBottom: 15,
-    textAlign: 'center',
-  },
-  editInput: {
-    width: '100%',
-    borderWidth: 1,
-    borderColor: '#ccc',
-    backgroundColor: '#fff',
-    marginBottom: 10,
-    padding: 10,
-    borderRadius: 6,
-  },
-  button: {
-    width: "80%",
-    padding: 16,
-    borderRadius: 5,
-    alignItems: 'center',
-    alignSelf: 'center',              
-    marginVertical: 10,              
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-  },
-  logout: {
-    backgroundColor: "red",
-    width: "80%",
-    padding: 16,
-    borderRadius: 5,
-    alignItems: 'center',
-    alignSelf: 'center',              
-    marginTop: 10,
-  },
-});
+}
 
 export default ProfilePage;
