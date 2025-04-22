@@ -106,6 +106,52 @@ const ProfilePage: React.FC = () => {
     }
   };
 
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      "Are you sure?",
+      "This action is permanent and cannot be undone.",
+      [
+        {
+          text: "No",
+          onPress: () => console.log("Delete account canceled"),
+          style: "cancel",
+        },
+        {
+          text: "Yes",
+          onPress: async () => {
+            try {
+              const uid = sessionContext.UID;
+              const token = sessionContext.token;
+  
+              if (!uid || !token) {
+                Alert.alert('Error', 'User not logged in.');
+                return;
+              }
+  
+              const response = await fetch(`${USERS_ENDPOINT}/${uid}`, {
+                method: 'DELETE',
+                headers: {
+                  'Content-Type': 'application/json',
+                  sessionToken: token,
+                },
+              });
+  
+              if (!response.ok) {
+                const errorMsg = await response.json();
+                Alert.alert('Delete error', errorMsg?.message || 'Unknown error');
+              } else {
+                Alert.alert('Success', 'Account deleted successfully!');
+                logout();
+              }
+            } catch (error: any) {
+              Alert.alert('Error', error.message || 'Something went wrong');
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const handleSave = async () => {
     try {
       const uid = sessionContext.UID;
@@ -116,7 +162,7 @@ const ProfilePage: React.FC = () => {
         return;
       }
 
-      // Build object to PUT
+      // store values to update for user
       const updateData: Partial<UserData> = {
         username: editedUsername,
         location: editedLocation,
@@ -275,6 +321,16 @@ const ProfilePage: React.FC = () => {
         {infoFetched ? <TouchableOpacity style={styles.logout} onPress={logout}>
           <Text style={styles.buttonText}>Log Out</Text>
         </TouchableOpacity> : null}
+
+        {infoFetched ? (
+          <TouchableOpacity
+            style={[styles.button, { backgroundColor: '#8B0000', marginTop: 10 }]}
+            onPress={handleDeleteAccount}
+          >
+            <Text style={styles.buttonText}>Delete Account</Text>
+          </TouchableOpacity>
+        ) : null}
+
       </View>
     </View>
   );
