@@ -122,7 +122,10 @@ export default function ChatScreen() {
 
       const data = await response.json();
       const userArray = Object.values(data) as UserType[];
-      setAllUsers(userArray.filter(u => u.uid !== myUid));
+
+      // make sure that the current user is not in the list
+      const filteredUsers = userArray.filter(u => u.uid !== myUid);
+      setAllUsers(filteredUsers);
     } catch (err) {
       console.error("Error loading users:", err);
     }
