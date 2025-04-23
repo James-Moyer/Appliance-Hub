@@ -1,13 +1,9 @@
 import React from 'react';
 import { FlatList, Text, View, StyleSheet, TouchableOpacity } from 'react-native';
-import { Appliance } from '../types/types';
+import { ApplianceProps, Appliance } from '../types/types';
 import { useRouter } from 'expo-router'; 
 
-type Props = {
-    data: Appliance[]; 
-};
-
-const ApplianceList: React.FC<Props> = ({ data }) => {
+const ApplianceList: React.FC<ApplianceProps> = ({ data }) => {
     const router = useRouter();
     const handleOpenChat = (someEmail: string) => {
         router.push({
