@@ -1,5 +1,12 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
+  TouchableWithoutFeedback,
+  Keyboard,
+} from 'react-native';
 import { Appbar } from 'react-native-paper';
 import ChatUsers from '../ChatUsers';
 import Conversation from '../Conversation';
@@ -32,29 +39,39 @@ const ChatScreenView: React.FC<ChatScreenViewProps> = ({
 
   return (
     <View style={styles.container}>
-      
       <Appbar.Header>
-          <Appbar.Action icon="arrow-left" onPress={handleBackPress} />
-          <Appbar.Content title={`Chat with ${selectedUser.username}`} />
+        <Appbar.Action icon="arrow-left" onPress={handleBackPress} />
+        <Appbar.Content title={`Chat with ${selectedUser.username}`} />
       </Appbar.Header>
-      
 
-      <Conversation
-        messages={messages}
-        myUid={selectedUser.uid}
-        input={input}
-        setInput={setInput}
-        sendMessage={sendMessage}
-      />
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={80} // Adjust based on header height or safe area
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <View style={styles.flex}>
+            <Conversation
+              messages={messages}
+              myUid={selectedUser.uid}
+              input={input}
+              setInput={setInput}
+              sendMessage={sendMessage}
+            />
+          </View>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
-  users:
-  {
-
+  container: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
+  },
+  flex: {
+    flex: 1,
   },
 });
 
