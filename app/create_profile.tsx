@@ -110,6 +110,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     padding: 20,
+    paddingTop: 50,
     backgroundColor: '#f8f9fa',
   },
   title: {
