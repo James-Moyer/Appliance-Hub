@@ -1,76 +1,66 @@
 import React, { useEffect, useState, useContext } from "react";
-import { View, Text, TextInput, FlatList, TouchableOpacity, StyleSheet, Alert } from "react-native";
+import { Alert } from "react-native";
 import { useLocalSearchParams, useFocusEffect, useRouter } from "expo-router";
-import { Appbar } from "react-native-paper";
-
 import { SessionContext } from "@/helpers/sessionContext";
 import { USERS_ENDPOINT, MESSAGES_ENDPOINT } from "@/constants/constants";
-
-type UserType = {
-  uid: string;
-  username: string;
-  email: string;
-};
-
-type MessageType = {
-  messageId?: string;
-  senderUid: string;
-  recipientUid: string;
-  text: string;
-  timestamp: number;
-};
+import { UserType, MessageType } from "../../types/types";
+import ChatScreenView from '../../components/views/ChatScreenView';
 
 export default function ChatScreen() {
   const router = useRouter();
 
-  // If /chatScreen?fromRequestBoard="true", we see fromRequestBoard as "true"
+  // when we are routed from request board
   const { fromRequestBoard, email } = useLocalSearchParams<{
     fromRequestBoard?: string;
     email?: string;
   }>();
 
+  // when we are routed from appliance board
   const { fromApplianceBoard, owner } = useLocalSearchParams<{
     fromApplianceBoard?: string;
     owner?: string;
   }>();
 
-  // Local boolean that says if we came from the requestBoard
+  // local boolean that says if we came from the requestBoard
   const [cameFromRB, setCameFromRB] = useState(false);
 
-  // Local boolean that says if we came from applianceBoard
+  // local boolean that says if we came from applianceBoard
   const [cameFromAB, setCameFromAB] = useState(false);
 
   const { sessionContext } = useContext(SessionContext);
   const [myUid, setMyUid] = useState("");
 
-  // The user list minus me
+  // the user list minus me
   const [allUsers, setAllUsers] = useState<UserType[]>([]);
-  // The currently selected user. If null => show local user list
+
+  // the currently selected user. If null => show local user list
   const [selectedUser, setSelectedUser] = useState<UserType | null>(null);
-  // The messages with that user
+
+  // the messages with the selected user
   const [messages, setMessages] = useState<MessageType[]>([]);
-  // Input text
+
+  // input text for the message box
   const [input, setInput] = useState("");
 
-  // Load user list on mount
+  // make sure myUid is set when sessionContext changes
   useEffect(() => {
     if (sessionContext?.UID) {
       setMyUid(sessionContext.UID);
     }
-    loadAllUsers();
-  }, []);
+  }, [sessionContext?.UID]);
+
+  // load the users once myUid is set
+  useEffect(() => {
+    if (myUid) {
+      loadAllUsers();
+    }
+  }, [myUid]);
 
   // If fromRequestBoard == "true", set cameFromRB = true each time we refocus; same for fromApplianceBoard
   // Also, if there's an email param or owner param, auto-select that user once allUsers is loaded.
   // On screen blur/unmount => reset cameFromRB, cameFromAB
   useFocusEffect(
     React.useCallback(() => {
-      console.log("useFocusEffect triggered");
-      console.log("fromRequestBoard:", fromRequestBoard);
-      console.log("email:", email);
-      console.log("fromApplianceBoard:", fromApplianceBoard);
-      console.log("owner:", owner);
-      
       // did we come from anywhere?
       setCameFromRB(fromRequestBoard === "true");
       setCameFromAB(fromApplianceBoard === "true");
@@ -93,16 +83,13 @@ export default function ChatScreen() {
       }
 
       return () => {
-        // router.replace({
-        //   pathname: "/chatScreen",
-        //   params: {},
-        // });
         setCameFromRB(false);
         setCameFromAB(false);
       };
     }, [fromRequestBoard, fromApplianceBoard, owner, email, allUsers])
   );
 
+  // function to get all the users in our db to display in the user list
   async function loadAllUsers() {
     try {
       const token = sessionContext?.token;
@@ -118,7 +105,10 @@ export default function ChatScreen() {
       const data = await response.json();
       if (response.ok) {
         const userArray = Object.values(data) as UserType[];
-        setAllUsers(userArray.filter(u => u.uid !== myUid));
+  
+        // make sure that the current user is not in the list
+        const filteredUsers = userArray.filter(u => u.uid !== myUid);
+        setAllUsers(filteredUsers);
       } else {
         Alert.alert("Error", data.message);
       }
@@ -129,6 +119,7 @@ export default function ChatScreen() {
     }
   }
 
+  // function to select a user from the user list
   async function selectUser(user: UserType) {
     setMessages([]);
 
@@ -159,6 +150,7 @@ export default function ChatScreen() {
     }
   }
 
+  // function to send a message
   async function sendMessage() {
     if (!input.trim() || !selectedUser) return;
     const textToSend = input.trim();
@@ -203,9 +195,9 @@ export default function ChatScreen() {
     }
   }
 
-  
+  // function for when back is pressed to return to user list or previous screen
   async function handleBackPress() {
-    // Clear all params when navigating back
+    // clear all params when navigating back
     router.replace({
       pathname: "/chatScreen",
       params: {},
@@ -226,131 +218,17 @@ export default function ChatScreen() {
     setCameFromRB(false);
   }
 
-  // If no user => show user list
-  if (!selectedUser) {
-    return (
-      <View style={styles.container}>
-        <Appbar.Header>
-          {cameFromRB ? (
-            <Appbar.Action icon="arrow-left" onPress={handleBackPress} />
-          ) : null}
-          <Appbar.Content title="Select a User to Chat" />
-        </Appbar.Header>
-
-        <FlatList
-          data={allUsers}
-          keyExtractor={(item) => item.uid}
-          contentContainerStyle={{ padding: 10 }}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={styles.userItem}
-              onPress={() => selectUser(item)}
-            >
-              <Text style={styles.userText}>{item.username}</Text>
-            </TouchableOpacity>
-          )}
-          ListEmptyComponent={
-            <Text style={{ marginTop: 20, textAlign: "center" }}>
-              No users found.
-            </Text>
-          }
-        />
-      </View>
-    );
-  }
-
-  // Otherwise => show the chat 
   return (
-    <View style={styles.container}>
-      <Appbar.Header>
-        <Appbar.Action icon="arrow-left" onPress={handleBackPress} />
-        <Appbar.Content title={`Chat with ${selectedUser.username}`} />
-      </Appbar.Header>
-
-      <FlatList
-        data={messages}
-        keyExtractor={(item, index) => `${item.timestamp}-${index}`}
-        contentContainerStyle={{ flexGrow: 1, justifyContent: "flex-end" }}
-        renderItem={({ item }) => {
-          const isMe = item.senderUid === myUid;
-          return (
-            <View
-              style={[
-                styles.message,
-                isMe ? styles.myMessage : styles.otherMessage,
-              ]}
-            >
-              <Text style={styles.messageText}>{item.text}</Text>
-            </View>
-          );
-        }}
-      />
-
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          value={input}
-          onChangeText={setInput}
-          placeholder="Type a message..."
-        />
-        <TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
-          <Text style={styles.sendText}>Send</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+    <ChatScreenView
+      cameFromRB={cameFromRB}
+      handleBackPress={handleBackPress}
+      allUsers={allUsers}
+      selectUser={selectUser}
+      selectedUser={selectedUser}
+      messages={messages}
+      input={input}
+      setInput={setInput}
+      sendMessage={sendMessage}
+    />
   );
 }
-
-// --- STYLES ---
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f5f5f5" },
-  userItem: {
-    padding: 15,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    marginVertical: 5,
-  },
-  userText: {
-    fontSize: 16,
-  },
-  message: {
-    padding: 10,
-    margin: 5,
-    borderRadius: 10,
-    maxWidth: "80%",
-  },
-  myMessage: {
-    backgroundColor: "#007AFF",
-    alignSelf: "flex-end",
-  },
-  otherMessage: {
-    backgroundColor: "#444444",
-    alignSelf: "flex-start",
-  },
-  messageText: {
-    color: "#fff",
-  },
-  inputContainer: {
-    flexDirection: "row",
-    padding: 10,
-    backgroundColor: "#fff",
-    alignItems: "center",
-  },
-  input: {
-    flex: 1,
-    padding: 10,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 20,
-  },
-  sendButton: {
-    marginLeft: 10,
-    backgroundColor: "#007AFF",
-    padding: 10,
-    borderRadius: 15,
-  },
-  sendText: {
-    color: "#fff",
-  },
-});

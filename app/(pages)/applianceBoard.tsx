@@ -1,15 +1,13 @@
 import React, { useState, useEffect, useContext, useCallback } from 'react';
-import { SafeAreaView, StyleSheet, Text, TextInput, View, Button, Modal, Alert } from 'react-native';
-import { useRouter, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import DropDownPicker from 'react-native-dropdown-picker';
-import ApplianceList from '../../components/ApplianceList';
+import { Alert } from 'react-native';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { Appliance } from '../../types/types';
 import { SessionContext } from '@/helpers/sessionContext';
+import ApplianceBoardView from '../../components/views/ApplianceBoardView';
 import { APPLIANCES_ENDPOINT } from '../../constants/constants';
 
 export default function App() {
     const router = useRouter();
-    const searchParams = useLocalSearchParams();
 
     const [myEmail, setMyEmail] = useState('');
     const [myUid, setMyUid] = useState('');
@@ -18,7 +16,7 @@ export default function App() {
         ownerUsername: '',
         name: '',
         description: '',
-        timeAvailable: 24,
+        timeAvailable: 0,
         lendTo: 'Anyone',
         isVisible: true,
     });
@@ -29,6 +27,7 @@ export default function App() {
     const [lendToDropdownOpen, setLendToDropdownOpen] = useState(false);
     const [visibilityDropdownOpen, setVisibilityDropdownOpen] = useState(false);
 
+    // function to fetch appliances from the server
     const fetchAppliances = async () => {
         const token = sessionContext.token;
         if (token) {
@@ -46,7 +45,7 @@ export default function App() {
                     setAppliances(Object.values(appliancesData)); 
                 } else {
                     const data = await response.json();
-                    Alert.alert('Error', data.message);
+                    Alert.alert('Error', data.message || 'Failed to fetch appliances.');
                 }
             } catch (error) {
                 Alert.alert('Error', 'An error occurred while fetching appliances.');
@@ -55,6 +54,7 @@ export default function App() {
         }
     };
 
+    // function to handle creating a new appliance
     const handleCreateAppliance = async () => {
         const token = sessionContext.token;
         setModalVisible(false);
@@ -97,7 +97,7 @@ export default function App() {
         }
     };
     
-    // Function to filter appliances based on the search input - will not show your own appliances or invisible appliances
+    // function to filter appliances based on the search input - will not show your own appliances or invisible appliances
     const getFilteredAppliances = () => {
         return appliances.filter((appliance) =>
             appliance.ownerUsername !== myEmail && appliance.isVisible &&
@@ -109,12 +109,12 @@ export default function App() {
         );
     };
 
-    // Whenever we come back to this screen, remove all search params so they don't stick
+    // whenever we come back to this screen, remove all search params so they don't stick
     useFocusEffect(
         useCallback(() => {
             router.replace({
                 pathname: "/applianceBoard",
-                params: {}, // Reset all params
+                params: {},
             });
 
             if (sessionContext.isLoggedIn !== 'true') {
@@ -125,187 +125,35 @@ export default function App() {
         ])
     );
 
+    // fetch appliances and set user email and UID when the component mounts
     useEffect(() => {
-        fetchAppliances();
         if (sessionContext && sessionContext.email && sessionContext.UID) {
             setMyEmail(sessionContext.email);
             setMyUid(sessionContext.UID);
         }
     }, []);
 
+    // fetch appliances when the user's email is set for proper filtering
+    useEffect(() => {
+        if (myEmail) {
+            fetchAppliances();
+        }
+    }, [myEmail]);
+
     return (
-        <View style={styles.container}>
-            <Text style={styles.name}>Appliances</Text>
-
-            {/* Button to open modal */}
-            <Button title="Add Appliance" onPress={() => setModalVisible(true)} />
-
-            {/* Search Bar */}
-            <TextInput
-                style={[styles.searchBar, styles.verticalMargin]}
-                placeholder="Search for owner, name, lendTo, or date..."
-                placeholderTextColor="#555"
-                value={filter}
-                onChangeText={setFilter}
-            />
-
-            {/* Appliance List */}
-            <SafeAreaView style={styles.container}>
-                <ApplianceList data={getFilteredAppliances()} />
-            </SafeAreaView>
-
-            {/* Modal for creating a new appliance */}
-            <Modal visible={modalVisible} animationType="slide" onRequestClose={() => setModalVisible(false)}>
-                <View style={styles.modalContainer}>
-                    <Text style={styles.modalTitle}>Add a New Appliance</Text>
-
-                    {/* Appliance Name */}
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Appliance Name"
-                        placeholderTextColor="#555"
-                        value={newAppliance.name}
-                        onChangeText={(text) => setNewAppliance({ ...newAppliance, name: text })}
-                    />
-
-                    {/* Description */}
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Description"
-                        placeholderTextColor="#555"
-                        value={newAppliance.description}
-                        onChangeText={(text) => setNewAppliance({ ...newAppliance, description: text })}
-                    />
-
-                    {/* Time Available */}
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Maximum Lending Duration (in hours)"
-                        placeholderTextColor="#555"
-                        keyboardType="numeric"
-                        value={newAppliance.timeAvailable.toString()}
-                        onChangeText={(text) => setNewAppliance({ ...newAppliance, timeAvailable: parseInt(text) || 0 })}
-                    />
-
-                    {/* Lend To Dropdown */}
-                    <DropDownPicker
-                        items={[
-                            { label: 'Same Floor', value: 'Same Floor' },
-                            { label: 'Same Dorm', value: 'Same Dorm' },
-                            { label: 'Anyone', value: 'Anyone' },
-                        ]}
-                        placeholder="Willing to lend to..."
-                        value={newAppliance.lendTo as 'Same Floor' | 'Same Dorm' | 'Anyone'}
-                        open={lendToDropdownOpen}
-                        setOpen={setLendToDropdownOpen}
-                        setValue={(callback) => {
-                            const selectedValue = callback(newAppliance.lendTo);
-                            setNewAppliance({
-                                ...newAppliance,
-                                lendTo: selectedValue,
-                            });
-                        }}
-                        containerStyle={[styles.pickerContainer, { zIndex: lendToDropdownOpen ? 10 : 1 }]}
-                        style={styles.picker}
-                        textStyle={styles.pickerText}
-                    />
-
-                    {/* Visibility Preference Dropdown */}
-                    <DropDownPicker
-                        items={[
-                            { label: 'Public', value: true },
-                            { label: 'Private', value: false },
-                        ]}
-                        placeholder="Visibility Preference"
-                        value={newAppliance.isVisible}
-                        open={visibilityDropdownOpen}
-                        setOpen={setVisibilityDropdownOpen}
-                        setValue={(callback) => {
-                            const selectedValue = callback(newAppliance.isVisible);
-                            setNewAppliance({
-                                ...newAppliance,
-                                isVisible: selectedValue,
-                            });
-                        }}
-                        containerStyle={[styles.pickerContainer, { zIndex: visibilityDropdownOpen ? 10 : 1 }]}
-                        style={styles.picker}
-                        textStyle={styles.pickerText}
-                    />
-                    
-                    {/* Submit button */}
-                    <View style={styles.verticalMargin}>
-                        <Button title="List Appliance" onPress={handleCreateAppliance} />
-                    </View>
-
-                    {/* Cancel button */}
-                    <View style={styles.verticalMargin}>
-                        <Button title="Cancel" onPress={() => setModalVisible(false)} />
-                    </View>
-                </View>
-            </Modal>
-        </View>
+        <ApplianceBoardView
+            appliances={getFilteredAppliances()}
+            filter={filter}
+            setFilter={setFilter}
+            modalVisible={modalVisible}
+            setModalVisible={setModalVisible}
+            newAppliance={newAppliance}
+            setNewAppliance={setNewAppliance}
+            lendToDropdownOpen={lendToDropdownOpen}
+            setLendToDropdownOpen={setLendToDropdownOpen}
+            visibilityDropdownOpen={visibilityDropdownOpen}
+            setVisibilityDropdownOpen={setVisibilityDropdownOpen}
+            handleCreateAppliance={handleCreateAppliance}
+        />
     );
 }
-
-
-// -------------- STYLES --------------
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#fff',
-        alignItems: 'center',
-        justifyContent: 'flex-start',
-    },
-    name: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        marginBottom: 10,
-        marginTop: 10,
-    },
-    searchBar: {
-        height: 40,
-        width: '90%',
-        borderColor: '#ccc',
-        borderWidth: 1,
-        borderRadius: 5,
-        marginBottom: 10,
-        paddingLeft: 10,
-    },
-    modalContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'white',
-        padding: 20,
-    },
-    modalTitle: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        marginBottom: 20,
-    },
-    input: {
-        height: 40,
-        width: '90%',
-        borderColor: '#ccc',
-        borderWidth: 1,
-        borderRadius: 5,
-        marginBottom: 10,
-        paddingLeft: 10,
-    },
-    pickerContainer: {
-        width: '90%',
-        marginBottom: 10,
-    },
-    picker: {
-        borderColor: '#ccc',
-        borderWidth: 1,
-        borderRadius: 5,
-    },
-    pickerText: {
-        color: '#555',
-    },
-    verticalMargin: {
-        marginVertical: 10,
-    }
-});
-
