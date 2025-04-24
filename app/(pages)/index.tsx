@@ -71,9 +71,8 @@ const ProfilePage: React.FC = () => {
           sessionToken: sessionContext.token,
         },
       });
-  
+      const returnedData = await response.json();
       if (response.ok) {
-        const returnedData = await response.json();
         console.log("Returned data: ", returnedData);
   
         checkUserVerified();
@@ -87,6 +86,9 @@ const ProfilePage: React.FC = () => {
         setEditedFloor(returnedData.floor?.toString() || '');
   
         setFetched(true);
+      } else {
+        Alert.alert("Failed to fetch user information! Please log out and sign back in again");
+        console.error("Failed to fetch user info, err message ", returnedData.message);
       }
     }
   };
