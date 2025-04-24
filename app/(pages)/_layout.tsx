@@ -20,6 +20,13 @@ export default function Layout() {
           options={{
             drawerLabel: 'Profile Page',
             title: 'Profile Page',
+            headerStyle: {
+              backgroundColor: '#219ebc',
+            },
+            headerTitleStyle: {
+              color: '#FFF', 
+            },
+            headerTitleAlign: 'center',
           }}
         />
         <Drawer.Screen
@@ -27,26 +34,55 @@ export default function Layout() {
           options={{
             drawerLabel: 'Requests',
             title: 'Request Board',
+            headerStyle: {
+              backgroundColor: '#219ebc',
+            },
+            headerTitleStyle: {
+              color: '#FFF', 
+            },
+            headerTitleAlign: 'center',
           }}
         />
         <Drawer.Screen
           name="applianceBoard"
           options={{
             drawerLabel: 'Appliances',
-            title: 'Appliance Board'
+            title: 'Appliance Board',
+            headerStyle: {
+              backgroundColor: '#219ebc',
+            },
+            headerTitleStyle: {
+              color: '#FFF', 
+            },
+            headerTitleAlign: 'center',
           }}
         />
         <Drawer.Screen
           name="chatScreen"
           options={{
             drawerLabel: 'Messages',
-            title: 'Messages'
+            title: 'Messages',
+            headerStyle: {
+              backgroundColor: '#219ebc',
+            },
+            headerTitleStyle: {
+              color: '#FFF', 
+            },
+            headerTitleAlign: 'center',
           }}
         />
         <Drawer.Screen
         name="public_profile"
         options={{
-          drawerItemStyle: { display: 'none' }
+          title: "Public Profile",
+          drawerItemStyle: { display: 'none' },
+          headerStyle: {
+            backgroundColor: '#219ebc',
+          },
+          headerTitleStyle: {
+            color: '#FFF', 
+          },
+          headerTitleAlign: 'center',
         }}
         />
       </Drawer>

@@ -32,10 +32,12 @@ const ChatScreenView: React.FC<ChatScreenViewProps> = ({
 
   return (
     <View style={styles.container}>
+      
       <Appbar.Header>
-        <Appbar.Action icon="arrow-left" onPress={handleBackPress} />
-        <Appbar.Content title={`Chat with ${selectedUser.username}`} />
+          <Appbar.Action icon="arrow-left" onPress={handleBackPress} />
+          <Appbar.Content title={`Chat with ${selectedUser.username}`} />
       </Appbar.Header>
+      
 
       <Conversation
         messages={messages}
@@ -50,6 +52,10 @@ const ChatScreenView: React.FC<ChatScreenViewProps> = ({
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f5f5f5' },
+  users:
+  {
+
+  },
 });
 
 export default ChatScreenView;

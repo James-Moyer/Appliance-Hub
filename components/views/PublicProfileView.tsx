@@ -45,11 +45,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 10,
-    backgroundColor: '#90BE6D',
+    backgroundColor: '#8ecae6',
   },
   card: {
     width: '90%',
-    backgroundColor: '#FFE2D1',
+    backgroundColor: '#fff',
     borderRadius: 16,
     padding: 30,
     alignItems: 'center',
