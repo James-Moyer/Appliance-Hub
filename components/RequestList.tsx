@@ -1,9 +1,9 @@
 import React from 'react';
 import { FlatList, Text, View, StyleSheet, TouchableOpacity } from 'react-native';
-import { Request, RequestProps } from '../types/types';
+import { Request, RequestListProps } from '../types/types';
 import { useRouter } from 'expo-router';
 
-const RequestList: React.FC<RequestProps> = ({ data }) => {
+const RequestList: React.FC<RequestListProps> = ({ data, isProfileView, handleDeleteRequest }) => {
     const router = useRouter();
     const handleOpenChat = (someEmail: string) => {
         router.push({
@@ -13,29 +13,43 @@ const RequestList: React.FC<RequestProps> = ({ data }) => {
             email: someEmail
           }
         });
-      };
+    };
 
     const renderItem = ({ item }: { item: Request }) => (
         <View style={styles.card}>
             <Text style={styles.title}>{item.applianceName}</Text>
-            <TouchableOpacity
-                onPress={() => {
-                    router.push(`/public_profile?email=${encodeURIComponent(item.requesterEmail)}`);
-                }}
-            >
-                <Text style={styles.requesterText}>Requester: {item.requesterEmail}</Text>
-            </TouchableOpacity>
+            {!isProfileView && (
+                <TouchableOpacity
+                    onPress={() => {
+                        router.push(`/public_profile?email=${encodeURIComponent(item.requesterEmail)}`);
+                    }}
+                >
+                    <Text style={styles.requesterText}>Requester: {item.requesterEmail}</Text>
+                </TouchableOpacity>
+            )}
             <Text>Status: {item.status}</Text>
             <Text>Collateral: {item.collateral ? 'Yes' : 'No'}</Text>
             <Text>Request Duration: {item.requestDuration.toString()} hours</Text>
 
             {/* Chat Button */}
-            <TouchableOpacity
-              style={styles.chatButton}
-              onPress={() => handleOpenChat(item.requesterEmail)}
-            >
-              <Text style={{ color: '#fff' }}>Chat with Requester</Text>
-            </TouchableOpacity>
+            {!isProfileView && (
+                <TouchableOpacity
+                style={styles.chatButton}
+                onPress={() => handleOpenChat(item.requesterEmail)}
+                >
+                <Text style={{ color: '#fff' }}>Chat with Requester</Text>
+                </TouchableOpacity>
+            )}
+
+            {/* Delete Request */}
+            {isProfileView && handleDeleteRequest && (
+              <TouchableOpacity
+                style={[styles.chatButton, { backgroundColor: 'red' }]}
+                onPress={() => handleDeleteRequest(item)} 
+              >
+                <Text style={{ color: '#fff' }}>Delete Request</Text>
+              </TouchableOpacity>
+            )}
         </View>
     );
 

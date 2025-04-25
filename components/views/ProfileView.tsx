@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, Image, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
+import { View, Text, Image, StyleSheet, TextInput, TouchableOpacity, Modal } from 'react-native';
 import { ProfileViewProps } from '../../types/types';
+import ApplianceList from '../ApplianceList';
+import RequestList from '../RequestList';
 
 
 const ProfileView: React.FC<ProfileViewProps> = ({
@@ -16,9 +18,18 @@ const ProfileView: React.FC<ProfileViewProps> = ({
   handleEditToggle,
   handleSendVerificationEmail,
   handleDeleteAccount,
-  logout
+  logout,
+  appliances,
+  requests,
+  handleDeleteAppliance,
+  handleDeleteRequest
 }) => {
   const [showBio, setShowBio] = useState(false);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+
+  const toggleModal = () => {
+    setIsModalVisible(!isModalVisible);
+  };
 
   return (
     <View style={styles.container}>
@@ -74,7 +85,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({
         )}
 
         {editing ? (
-          <View style={{ marginTop: 20, flexDirection: "row", width: 110, height: 90, gap: 20, marginRight: 85, marginTop: -15}}>
+          <View style={{ flexDirection: "row", width: 110, height: 90, gap: 20, marginRight: 85, marginTop: -15}}>
             <TouchableOpacity
               style={[styles.button, { backgroundColor: '#219ebc' }]}
               onPress={handleSave}
@@ -90,40 +101,80 @@ const ProfileView: React.FC<ProfileViewProps> = ({
             </TouchableOpacity>
           </View>
         ) : (
-<View style={styles.rowButtons}>
-  <TouchableOpacity
-    style={[styles.smallButton, { backgroundColor: '#ffb703' }]}
-    onPress={handleEditToggle}
-  >
-    <Text style={styles.buttonText}>Edit</Text>
-  </TouchableOpacity>
-  
-  {user.emailVerified ? null : (
-    <TouchableOpacity
-      style={[styles.smallButton, { backgroundColor: '#fb8500' }]}
-      onPress={handleSendVerificationEmail}
-    >
-      <Text style={styles.buttonText}>Verify</Text>
-    </TouchableOpacity>
-  )}
-  
-  <TouchableOpacity
-    style={[styles.smallButton, { backgroundColor: 'red' }]}
-    onPress={logout}
-  >
-    <Text style={styles.buttonText}>Log Out</Text>
-  </TouchableOpacity>
-  
-  <TouchableOpacity
-    style={[styles.smallButton, { backgroundColor: '#9a130e' }]}
-    onPress={handleDeleteAccount}
-  >
-    <Text style={styles.buttonText}>Delete</Text>
-  </TouchableOpacity>
-</View>
+          <View style={styles.rowButtons}>
+            <TouchableOpacity
+              style={[styles.smallButton, { backgroundColor: '#ffb703' }]}
+              onPress={handleEditToggle}
+            >
+              <Text style={styles.buttonText}>Edit</Text>
+            </TouchableOpacity>
+            
+            {user.emailVerified ? null : (
+              <TouchableOpacity
+                style={[styles.smallButton, { backgroundColor: '#fb8500' }]}
+                onPress={handleSendVerificationEmail}
+              >
+                <Text style={styles.buttonText}>Verify</Text>
+              </TouchableOpacity>
+            )}
+            
+            <TouchableOpacity
+              style={[styles.smallButton, { backgroundColor: 'red' }]}
+              onPress={logout}
+            >
+              <Text style={styles.buttonText}>Log Out</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={[styles.smallButton, { backgroundColor: '#9a130e' }]}
+              onPress={handleDeleteAccount}
+            >
+              <Text style={styles.buttonText}>Delete</Text>
+            </TouchableOpacity>
+          </View>
 
         )}
       </View>
+
+      {/* appliances and requests button for user */}
+      <TouchableOpacity
+        style={[styles.button, { backgroundColor: '#007AFF' }]}
+        onPress={toggleModal}
+      >
+        <Text style={styles.buttonText}>View My Appliances and Requests</Text>
+      </TouchableOpacity>
+
+      {/* screen for appliances and requests that belong to the user */}
+      <Modal
+        visible={isModalVisible}
+        animationType="slide"
+      >
+        <View style={styles.modalContainer}>
+          {/* user's appliances and requests */}
+          <View style={styles.listsContainer}>
+            {/* appliance list */}
+            <View style={[styles.listCard, { height: 300 }]}>
+              <Text style={styles.listTitle}>My Appliances</Text>
+              <ApplianceList data={appliances} isProfileView={true} handleDeleteAppliance={handleDeleteAppliance} />
+            </View>
+
+            {/* request list */}
+            <View style={[styles.listCard, { height: 300 }]}>
+              <Text style={styles.listTitle}>My Requests</Text>
+              <RequestList data={requests} isProfileView={true} handleDeleteRequest={handleDeleteRequest} />
+            </View>
+          </View>
+
+          {/* button to go back to profile */}
+          <TouchableOpacity
+            style={[styles.button, { backgroundColor: '#9a130e' }]}
+            onPress={toggleModal}
+          >
+            <Text style={styles.buttonText}>Close</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
+
     </View>
   );
 };
@@ -222,7 +273,38 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: 55,
     height: 47,
-  },  
+  },
+  listsContainer: {
+    flexDirection: 'column',
+    justifyContent: 'flex-start', 
+    width: '100%',
+    marginTop: 20,
+    gap: 20,
+    marginBottom: 20,
+  },
+  listCard: {
+    width: '100%',
+    padding: 20,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+  },
+  listTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  modalContainer: {
+    padding: 20,
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    flex: 1,
+    justifyContent: 'flex-start',
+  },
 });
 
 export default ProfileView;
