@@ -56,7 +56,7 @@ export default function Login() {
       // Retrieve the ID token (a JWT)
       const idToken = await userCredential.user.getIdToken();
       
-      console.log("Token: " + idToken);
+      // console.log("Token: " + idToken);
       // console.log("UID: " + userCredential.user.uid);
 
       await setContext({ // Sets context asynchoronously, needs to se entire context at once

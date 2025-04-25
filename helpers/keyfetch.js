@@ -5,8 +5,7 @@ import * as SecureStore from 'expo-secure-store';
 async function saveInStore(key, value) {
     try {
         if (Platform.OS == 'web') {
-            // THIS TRIED TO PRINT THE PAGE SO I DONT THINK WE SHOULD USE IT- just gonna do print statements
-            // await AsyncStorage.setItem(key, value); // secure store not available on web so we use async store for testing- NOT SECURE
+            // SecureStore is not available for web so we just print- web is for testing only
             console.log("saved a key! ", key, " to ", value);
         } else {
             await SecureStore.setItemAsync(key, value.toString());
