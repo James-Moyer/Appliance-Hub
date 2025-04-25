@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Keyboard, TouchableWithoutFeedback } from 'react-native';
 import { useRouter } from 'expo-router';
 import { USERS_ENDPOINT } from '../constants/constants';
-import { Picker } from '@react-native-picker/picker';
+import DropDownPicker from 'react-native-dropdown-picker';
 
 export default function CreateProfile() {
   const router = useRouter();
@@ -15,6 +15,14 @@ export default function CreateProfile() {
     location: '',
     floor: '',
   });
+
+  const [open, setOpen] = useState(false);
+  const [items, setItems] = useState([
+    { label: 'Sandburg North', value: 'Sandburg North' },
+    { label: 'Sandburg South', value: 'Sandburg South' },
+    { label: 'Sandburg West', value: 'Sandburg West' },
+    { label: 'Sandburg East', value: 'Sandburg East' },
+  ]);
 
   // Handle input change
   const handleChange = (key: keyof typeof form, value: string) => {
@@ -87,18 +95,22 @@ export default function CreateProfile() {
           onChangeText={(text) => handleChange('email', text)}
           keyboardType="email-address"
         />
-        <Picker
-        selectedValue={form.location}
-        onValueChange={(value) => handleChange('location', value)}
-        style={styles.location} 
-        >
-        <Picker.Item label="Select Location" value="" />
-        <Picker.Item label="Sandburg North" value="Sandburg North" />
-        <Picker.Item label="Sandburg South" value="Sandburg South" />
-        <Picker.Item label="Sandburg West" value="Sandburg West" />
-        <Picker.Item label="Sandburg East" value="Sandburg East" />
-        {/* Add more options as needed */}
-      </Picker>
+        <DropDownPicker
+          open={open}
+          value={form.location}
+          items={[
+            { label: 'Sandburg North', value: 'Sandburg North' },
+            { label: 'Sandburg South', value: 'Sandburg South' },
+            { label: 'Sandburg West', value: 'Sandburg West' },
+            { label: 'Sandburg East', value: 'Sandburg East' },
+          ]}
+          setOpen={setOpen}
+          setValue={(callback) => setForm({ ...form, location: callback(form.location) })}
+          setItems={setItems}
+          placeholder="Select Location"
+          style={styles.dropdown}
+          dropDownContainerStyle={styles.dropdownContainer}
+        />
         <TextInput
           style={styles.input}
           placeholder="Floor"
@@ -122,7 +134,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     padding: 20,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#8ecae6',
   },
   title: {
     fontSize: 24,
@@ -172,4 +184,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-start', // Align left
   },
+  dropdown: {
+    width: '100%',
+    marginBottom: 10,
+    borderColor: '#ccc',
+    backgroundColor: '#fff',
+  },
+  dropdownContainer: {
+    width: '100%',
+    borderColor: '#ccc',
+  },  
 });
