@@ -39,7 +39,6 @@ const ChatScreenView: React.FC<ChatScreenViewProps> = ({
 
       <Conversation
         messages={messages}
-        myUid={selectedUser.uid}
         input={input}
         setInput={setInput}
         sendMessage={sendMessage}
