@@ -153,13 +153,13 @@ const ProfileView: React.FC<ProfileViewProps> = ({
           {/* user's appliances and requests */}
           <View style={styles.listsContainer}>
             {/* appliance list */}
-            <View style={[styles.listCard, { flex: 1, height: 300 }]}>
+            <View style={[styles.listCard, { height: 300 }]}>
               <Text style={styles.listTitle}>My Appliances</Text>
               <ApplianceList data={appliances} isProfileView={true} handleDeleteAppliance={handleDeleteAppliance} />
             </View>
 
             {/* request list */}
-            <View style={[styles.listCard, { flex: 1, height: 300 }]}>
+            <View style={[styles.listCard, { height: 300 }]}>
               <Text style={styles.listTitle}>My Requests</Text>
               <RequestList data={requests} isProfileView={true} handleDeleteRequest={handleDeleteRequest} />
             </View>
@@ -275,15 +275,15 @@ const styles = StyleSheet.create({
     height: 47,
   },
   listsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: 'column',
+    justifyContent: 'flex-start', 
     width: '100%',
     marginTop: 20,
     gap: 20,
     marginBottom: 20,
   },
   listCard: {
-    width: '48%',
+    width: '100%',
     padding: 20,
     backgroundColor: '#fff',
     borderRadius: 8,
