@@ -20,7 +20,7 @@ export default function PublicProfile() {
     (
       // Throw in an alert or something here so user knows what's happening?
       useCallback(() => {
-        // console.log("Focused public profile");
+        console.log("Focused public profile");
         if (sessionContext.isLoggedIn != "true") {
           router.push("/" as any); // Redirect to login page if not signed in
         }

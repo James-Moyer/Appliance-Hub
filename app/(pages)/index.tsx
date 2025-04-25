@@ -3,9 +3,9 @@ import { Alert } from 'react-native';
 import { saveInStore, removeFromStore } from '../../helpers/keyfetch'; // local storage helpers
 import { useRouter } from 'expo-router';
 import { SessionContext } from '@/helpers/sessionContext';
-import { USERS_ENDPOINT } from '../../constants/constants';
+import { USERS_ENDPOINT, APPLIANCES_ENDPOINT, REQUESTS_ENDPOINT } from '../../constants/constants';
 import { auth } from '../firebase/firebaseConfig';
-import { UserData } from '../../types/types';
+import { UserData, Appliance, Request } from '../../types/types';
 import ProfileView from '../../components/views/ProfileView';
 
 const ProfilePage: React.FC = () => {
@@ -13,8 +13,12 @@ const ProfilePage: React.FC = () => {
 
   const { sessionContext, setContext }  = useContext(SessionContext);
   const [user, setUser] = useState<UserData>({});
+  const [appliances, setAppliances] = useState<Appliance[]>([]);
+  const [requests, setRequests] = useState<Request[]>([]);
   const [editing, setEditing] = useState<boolean>(false);
   const [infoFetched, setFetched] = useState(false);
+  const [refreshAppliances, setRefreshAppliances] = useState(false);
+  const [refreshRequests, setRefreshRequests] = useState(false);
 
   // Local state for edits
   const [editedUsername, setEditedUsername] = useState('');
@@ -214,6 +218,141 @@ const ProfilePage: React.FC = () => {
     }
   };
 
+  // fetch appliances for the user (filtered by ownerUsername)
+  const fetchAppliances = async () => {
+    const token = sessionContext.token;
+    if (token) {
+      try {
+        const response = await fetch(APPLIANCES_ENDPOINT, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            sessionToken: token,
+          },
+        });
+  
+        if (response.ok) {
+          const appliancesData: { [key: string]: Appliance } = await response.json();
+          setAppliances(Object.values(appliancesData).filter((item: Appliance) => item.ownerUsername === user.email));
+        } else {
+          const data = await response.json();
+          Alert.alert('Error', data.message || 'Failed to fetch appliances.');
+        }
+      } catch (error) {
+        Alert.alert('Error', 'An error occurred while fetching appliances.');
+        console.error(error);
+      }
+    }
+  };
+
+  // function to handle deleting an appliance
+  const handleDeleteAppliance = (appliance: Appliance) => {
+    Alert.alert(
+      "Are you sure you want to delete this appliance?",
+      "This action is irreversible.",
+      [
+        {
+          text: "No",
+          onPress: () => console.log("Delete canceled"),
+          style: "cancel",
+        },
+        {
+          text: "Yes",
+          onPress: async () => {
+            try {
+              const response = await fetch(`${APPLIANCES_ENDPOINT}/${appliance.applianceId}`, {
+                method: 'DELETE',
+                headers: {
+                  'Content-Type': 'application/json',
+                  sessionToken: sessionContext.token,
+                },
+              });
+  
+              const result = await response.json();
+              if (response.ok) {
+                Alert.alert("Success", "Appliance deleted successfully!");
+                setRefreshAppliances(true);
+              } else {
+                Alert.alert("Error", result.message || "Failed to delete appliance.");
+              }
+            } catch (error: any) {
+              Alert.alert("Error", error.message || "An error occurred while deleting the appliance.");
+            }
+          },
+          style: "destructive",
+        },
+      ]
+    );
+  };
+  
+
+  // fetch requests for the user (filtered by requesterEmail)
+  const fetchRequests = async () => {
+    const token = sessionContext.token;
+    if (token) {
+      try {
+        const response = await fetch(REQUESTS_ENDPOINT, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            sessionToken: token,
+          },
+        });
+
+        if (response.ok) {
+          const requestsData: { [key: string]: Request } = await response.json();
+          setRequests(Object.values(requestsData).filter((item: Request) => item.requesterEmail === user.email));
+        } else {
+          const data = await response.json();
+          Alert.alert('Error', data.message || 'Failed to fetch requests.');
+        }
+      } catch (error) {
+        Alert.alert('Error', 'An error occurred while fetching requests.');
+        console.error(error);
+      }
+    }
+  };
+
+    // function to handle deleting a request
+    const handleDeleteRequest = (request: Request) => {
+      Alert.alert(
+        "Are you sure you want to delete this request?",
+        "This action is irreversible.",
+        [
+          {
+            text: "No",
+            onPress: () => console.log("Delete canceled"),
+            style: "cancel",
+          },
+          {
+            text: "Yes",
+            onPress: async () => {
+              try {
+                const response = await fetch(`${REQUESTS_ENDPOINT}/${request.requestId}`, {
+                  method: 'DELETE',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    sessionToken: sessionContext.token,
+                  },
+                });
+    
+                const result = await response.json();
+                if (response.ok) {
+                  Alert.alert("Success", "Request deleted successfully!");
+                  setRefreshRequests(true);
+                } else {
+                  Alert.alert("Error", result.message || "Failed to delete request.");
+                }
+              } catch (error: any) {
+                Alert.alert("Error", error.message || "An error occurred while deleting the request.");
+              }
+            },
+            style: "destructive",
+          },
+        ]
+      );
+    };
+
   // get info if not already done when the component mounts
   useEffect(() => {
     if (!infoFetched) { // Just check to see if values have been populated yet
@@ -221,6 +360,30 @@ const ProfilePage: React.FC = () => {
       getResponse();
     }
   }, [infoFetched]);
+
+  // fetch appliances when the user's email is set
+  useEffect(() => {
+    if (user.email && user.email !== '') {
+        fetchAppliances();
+        fetchRequests();
+    }
+  }, [user.email]);
+
+  // re-fetch appliances if refreshAppliances is set to true
+  useEffect(() => {
+    if (refreshAppliances) {
+      fetchAppliances(); 
+      setRefreshAppliances(false);
+    }
+  }, [refreshAppliances]);
+
+  // re-fetch requests if refreshRequests is set to true
+  useEffect(() => {
+    if (refreshRequests) {
+      fetchRequests(); 
+      setRefreshRequests(false);
+    }
+  }, [refreshRequests]);
 
   return (
     <ProfileView
@@ -237,6 +400,10 @@ const ProfilePage: React.FC = () => {
       handleSendVerificationEmail={handleSendVerificationEmail}
       handleDeleteAccount={handleDeleteAccount}
       logout={logout}
+      appliances={appliances}
+      requests={requests}
+      handleDeleteAppliance={handleDeleteAppliance}
+      handleDeleteRequest={handleDeleteRequest}
     />
   );
 }

@@ -28,7 +28,7 @@ const PublicProfileView: React.FC<PublicProfileViewProps> = ({ user, loading }) 
           {user.email || 'No email'}
         </Text>
         <Text style={styles.detail}>
-          Dorm: {user.location ?? 'Hidden'} / Floor: {user.floor ?? 'Hidden'}
+          Dorm: {user.location ?? 'N/A'} / Floor: {user.floor ?? 'N/A'}
         </Text>
       </View>
     </View>
