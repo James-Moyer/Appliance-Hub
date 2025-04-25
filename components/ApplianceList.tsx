@@ -1,9 +1,9 @@
 import React from 'react';
 import { FlatList, Text, View, StyleSheet, TouchableOpacity } from 'react-native';
-import { ApplianceProps, Appliance } from '../types/types';
+import { ApplianceListProps, Appliance } from '../types/types';
 import { useRouter } from 'expo-router'; 
 
-const ApplianceList: React.FC<ApplianceProps> = ({ data }) => {
+const ApplianceList: React.FC<ApplianceListProps> = ({ data, isProfileView, handleDeleteAppliance }) => {
     const router = useRouter();
     const handleOpenChat = (someEmail: string) => {
         router.push({
@@ -13,23 +13,35 @@ const ApplianceList: React.FC<ApplianceProps> = ({ data }) => {
             owner: someEmail
           }
         });
-      };
+    };
 
     const renderItem = ({ item }: { item: Appliance }) => (
         <View style={styles.card}>
             <Text style={styles.title}>{item.name}</Text>
-            <Text>User: {item.ownerUsername}</Text>
+            {!isProfileView && (<Text>User: {item.ownerUsername}</Text>)}
             <Text>Description: {item.description}</Text>
             <Text>Borrower Location Preference: {item.lendTo}</Text>
             <Text>Maximum Lending Duration: { `${item.timeAvailable}` } hours</Text>
 
             {/* Chat Button */}
-            <TouchableOpacity
-              style={styles.chatButton}
-              onPress={() => handleOpenChat(item.ownerUsername)}
-            >
-              <Text style={{ color: '#fff' }}>Chat with Appliance Owner</Text>
-            </TouchableOpacity>
+            {!isProfileView && (
+              <TouchableOpacity
+                style={styles.chatButton}
+                onPress={() => handleOpenChat(item.ownerUsername)}
+              >
+                <Text style={{ color: '#fff' }}>Chat with Appliance Owner</Text>
+              </TouchableOpacity>
+            )}
+
+            {/* Delete Appliance */}
+            {isProfileView && handleDeleteAppliance && (
+              <TouchableOpacity
+                style={[styles.chatButton, { backgroundColor: 'red' }]}
+                onPress={() => handleDeleteAppliance(item)} 
+              >
+                <Text style={{ color: '#fff' }}>Delete Appliance</Text>
+              </TouchableOpacity>
+            )}
         </View>
     );
 
