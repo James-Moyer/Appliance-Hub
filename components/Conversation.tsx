@@ -1,8 +1,11 @@
-import React from "react";
+import React, { useContext } from "react";
 import { FlatList, Text, TextInput, TouchableOpacity, View, StyleSheet } from "react-native";
 import { ConversationProps } from "../types/types";
+import { SessionContext } from "../helpers/sessionContext";
 
-const Conversation: React.FC<ConversationProps> = ({ messages, myUid, input, setInput, sendMessage }) => {
+const Conversation: React.FC<ConversationProps> = ({ messages, input, setInput, sendMessage }) => {
+  const {sessionContext} = useContext(SessionContext);
+  // console.log("my UID: ", sessionContext.UID)
   return (
     <View style={{ flex: 1 }}>
       <FlatList
@@ -10,7 +13,7 @@ const Conversation: React.FC<ConversationProps> = ({ messages, myUid, input, set
         keyExtractor={(item, index) => `${item.timestamp}-${index}`}
         contentContainerStyle={{ flexGrow: 1, justifyContent: "flex-end" }}
         renderItem={({ item }) => {
-          const isMe = item.senderUid === myUid;
+          const isMe = item.senderUid === sessionContext.UID;
           return (
             <View
               style={[
