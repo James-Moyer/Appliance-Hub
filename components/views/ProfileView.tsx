@@ -74,16 +74,16 @@ const ProfileView: React.FC<ProfileViewProps> = ({
         )}
 
         {editing ? (
-          <View style={{ marginTop: 20 }}>
+          <View style={{ marginTop: 20, flexDirection: "row", width: 110, height: 90, gap: 20, marginRight: 85, marginTop: -15}}>
             <TouchableOpacity
-              style={[styles.button, { backgroundColor: 'green' }]}
+              style={[styles.button, { backgroundColor: '#219ebc' }]}
               onPress={handleSave}
             >
               <Text style={styles.buttonText}>Save</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.button, { backgroundColor: 'gray', marginTop: 10 }]}
+              style={[styles.button, { backgroundColor: '#023047'}]}
               onPress={handleEditToggle}
             >
               <Text style={styles.buttonText}>Cancel</Text>
@@ -216,11 +216,12 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   smallButton: {
-    padding: 6,
+    padding: 3,
     borderRadius: 8,
     alignItems: 'center',
-    width: 70,
-    height: 40,
+    justifyContent: 'center',
+    width: 55,
+    height: 47,
   },  
 });
 
