@@ -1,5 +1,6 @@
 //----------Types for Views and Components----------//
 export type Request = {
+    requestId?: string;
     requesterEmail: string;
     applianceName: string;
     collateral: boolean;
@@ -8,6 +9,7 @@ export type Request = {
 };
 
 export type Appliance = {
+    applianceId?: string;
     ownerUsername: string;
     name: string;
     description: string;
@@ -39,6 +41,16 @@ export type RequestProps = {
 };
 
 //----------Interfaces for Views and Components----------//
+export interface ApplianceListProps extends ApplianceProps {
+    isProfileView?: boolean;
+    handleDeleteAppliance?: (appliance: Appliance) => void;
+}
+
+export interface RequestListProps extends RequestProps {
+    isProfileView?: boolean;
+    handleDeleteRequest?: (request: Request) => void;
+}
+
 export interface UserData {
     username?: string;
     email?: string;
@@ -69,6 +81,10 @@ export interface ProfileViewProps {
     handleSendVerificationEmail: () => void;
     handleDeleteAccount: () => void;
     logout: () => void;
+    appliances: Appliance[];
+    requests: Request[];
+    handleDeleteAppliance?: (appliance: Appliance) => void;
+    handleDeleteRequest?: (request: Request) => void;
 };
 
 export interface RequestBoardViewProps {
@@ -120,6 +136,7 @@ export interface ChatUsersProps {
 
 export interface ConversationProps {
     messages: MessageType[];
+    myUid: string;
     input: string;
     setInput: React.Dispatch<React.SetStateAction<string>>;
     sendMessage: () => void;
