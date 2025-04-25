@@ -20,19 +20,22 @@ const ApplianceBoardView: React.FC<ApplianceBoardViewProps> = ({
 }) => {
   return (
     <View style={styles.container}>
-      <Text style={styles.name}>Appliances</Text>
 
-      {/* Button to open modal */}
-      <Button title="Add Appliance" onPress={() => setModalVisible(true)} />
+      {/* Top Section: Button + Search Bar */}
+      <View style={styles.topSection}>
+        <Text style={styles.name}>Appliances</Text>
+        <View style={styles.searchRow}>
+          <TextInput
+            style={styles.searchBar}
+            placeholder="Search..."
+            placeholderTextColor="#555"
+            value={filter}
+            onChangeText={setFilter}
+          />
+          <Button color = "#219ebc" title="Add" onPress={() => setModalVisible(true)} />
+        </View>
+      </View>
 
-      {/* Search Bar */}
-      <TextInput
-        style={[styles.searchBar, styles.verticalMargin]}
-        placeholder="Search for owner, name, lendTo, or date..."
-        placeholderTextColor="#555"
-        value={filter}
-        onChangeText={setFilter}
-      />
 
       {/* Appliance List */}
       <SafeAreaView style={styles.container}>
@@ -119,12 +122,12 @@ const ApplianceBoardView: React.FC<ApplianceBoardViewProps> = ({
 
           {/* Submit button */}
           <View style={styles.verticalMargin}>
-            <Button title="List Appliance" onPress={handleCreateAppliance} />
+            <Button color = "#219ebc" title="List Appliance" onPress={handleCreateAppliance} />
           </View>
 
           {/* Cancel button */}
           <View style={styles.verticalMargin}>
-            <Button title="Cancel" onPress={() => setModalVisible(false)} />
+            <Button color = "#219ebc" title="Cancel" onPress={() => setModalVisible(false)} />
           </View>
         </View>
       </Modal>
@@ -140,31 +143,63 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
   },
   name: {
+    color: "#fff",
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 10,
+    marginTop: 0,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 5,
+  },
+  topSection: {
+    width: '100%',
+    backgroundColor: '#8ecae6', // Top section color
+    padding: 20,
+    marginBottom: 10,
+    alignItems: 'center',
+    shadowColor: '#000', // Shadow color
+    shadowOffset: { width: 0, height: 4 }, // Position of the shadow
+    shadowOpacity: 0.1, // Opacity of the shadow
+    shadowRadius: 6, // Blur radius
+    elevation: 5, // For Android shadow
+  },
+  searchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    width: '100%',
     marginTop: 10,
   },
   searchBar: {
+    flex: 1,
     height: 40,
-    width: '90%',
     borderColor: '#ccc',
     borderWidth: 1,
     borderRadius: 5,
-    marginBottom: 10,
-    paddingLeft: 10,
-  },
+    paddingHorizontal: 10,
+    marginRight: 10,
+    backgroundColor: "#fff",
+  },  
   modalContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'white',
+    backgroundColor: '#8ecae6',
     padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 5,
   },
   modalTitle: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
+    color: "#fff",
   },
   input: {
     height: 40,
@@ -174,6 +209,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     marginBottom: 10,
     paddingLeft: 10,
+    backgroundColor: "#fff",
   },
   pickerContainer: {
     width: '90%',

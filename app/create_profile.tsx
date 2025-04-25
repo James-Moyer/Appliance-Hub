@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Keyboard, TouchableWithoutFeedback } from 'react-native';
 import { useRouter } from 'expo-router';
 import { USERS_ENDPOINT } from '../constants/constants';
+import { Picker } from '@react-native-picker/picker';
 
 export default function CreateProfile() {
   const router = useRouter();
@@ -55,7 +56,13 @@ export default function CreateProfile() {
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
       <View style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.push('/')}>
+          <Text style={styles.backButtonText}>←</Text>
+        </TouchableOpacity>
+        
         <Text style={styles.title}>Create Profile</Text>
+      </View>
 
         <TextInput
           style={styles.input}
@@ -80,13 +87,18 @@ export default function CreateProfile() {
           onChangeText={(text) => handleChange('email', text)}
           keyboardType="email-address"
         />
-        <TextInput
-          style={styles.input}
-          placeholder="Location"
-          placeholderTextColor="#555"  // dark gray
-          value={form.location}
-          onChangeText={(text) => handleChange('location', text)}
-        />
+        <Picker
+        selectedValue={form.location}
+        onValueChange={(value) => handleChange('location', value)}
+        style={styles.location} 
+        >
+        <Picker.Item label="Select Location" value="" />
+        <Picker.Item label="Sandburg North" value="Sandburg North" />
+        <Picker.Item label="Sandburg South" value="Sandburg South" />
+        <Picker.Item label="Sandburg West" value="Sandburg West" />
+        <Picker.Item label="Sandburg East" value="Sandburg East" />
+        {/* Add more options as needed */}
+      </Picker>
         <TextInput
           style={styles.input}
           placeholder="Floor"
@@ -116,6 +128,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
+    color: "#fff",
   },
   input: {
     width: '100%',
@@ -126,8 +139,15 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     backgroundColor: '#fff',
   },
+  location: {
+    width: '100%',
+    padding: 1,
+    marginBottom: 10,
+    borderColor: '#ccc',
+    backgroundColor: '#fff',
+  },
   button: {
-    backgroundColor: '#007bff',
+    backgroundColor: '#219ebc',
     padding: 12,
     borderRadius: 5,
     width: '100%',
@@ -136,5 +156,20 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#fff',
     fontSize: 16,
+  },
+  backButton: {
+  padding: 5,
+  marginRight: 10,
+  bottom: 18, 
+  },
+  backButtonText: {
+    color: '#fff',
+    fontSize: 40,
+  },
+  header: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start', // Align left
   },
 });
