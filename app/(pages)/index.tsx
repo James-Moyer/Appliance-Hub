@@ -73,7 +73,7 @@ const ProfilePage: React.FC = () => {
       });
       const returnedData = await response.json();
       if (response.ok) {
-        console.log("Returned data: ", returnedData);
+        // console.log("Returned data: ", returnedData);
   
         checkUserVerified();
   
@@ -217,7 +217,7 @@ const ProfilePage: React.FC = () => {
   // get info if not already done when the component mounts
   useEffect(() => {
     if (!infoFetched) { // Just check to see if values have been populated yet
-      console.log("user data not yet fetched, grabbing it now");
+      // console.log("user data not yet fetched, grabbing it now");
       getResponse();
     }
   }, [infoFetched]);

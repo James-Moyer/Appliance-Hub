@@ -146,7 +146,7 @@ export default function ChatScreen() {
 
   // function to get users w/ chats that exist
   async function loadAllUsers() {
-    console.log("fetching users");
+    // console.log("fetching users");
     try {
       const token = sessionContext?.token;
       if (!token) return;
@@ -179,7 +179,7 @@ export default function ChatScreen() {
   // function to select a user from the user list
   async function selectUser(user: UserType) {
     setMessages([]);
-    console.log("Selected User: ", user);
+    // console.log("Selected User: ", user);
 
     try {
       const token = sessionContext?.token;
@@ -200,7 +200,7 @@ export default function ChatScreen() {
         // console.log("Messages: ", data);
         for (let index = data.length - 1; index >= 0; index--) { // Mark all new messages as read
           const message = data[index];
-          console.log(message);
+          // console.log(message);
           if (message.senderUid === myUid) continue; // Skip messages that I sent
           if (message.isRead) break; // Stop once read messages are found and it's from someone else
           // console.log("marking ", message, " as read");
