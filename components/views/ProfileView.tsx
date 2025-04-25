@@ -153,13 +153,13 @@ const ProfileView: React.FC<ProfileViewProps> = ({
           {/* user's appliances and requests */}
           <View style={styles.listsContainer}>
             {/* appliance list */}
-            <View style={[styles.listCard, { height: 300 }]}>
+            <View style={[styles.listCard, { height: '35%' }]}>
               <Text style={styles.listTitle}>My Appliances</Text>
               <ApplianceList data={appliances} isProfileView={true} handleDeleteAppliance={handleDeleteAppliance} />
             </View>
 
             {/* request list */}
-            <View style={[styles.listCard, { height: 300 }]}>
+            <View style={[styles.listCard, { height: '35%' }]}>
               <Text style={styles.listTitle}>My Requests</Text>
               <RequestList data={requests} isProfileView={true} handleDeleteRequest={handleDeleteRequest} />
             </View>
