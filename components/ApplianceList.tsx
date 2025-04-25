@@ -18,14 +18,7 @@ const ApplianceList: React.FC<ApplianceProps> = ({ data }) => {
     const renderItem = ({ item }: { item: Appliance }) => (
         <View style={styles.card}>
             <Text style={styles.title}>{item.name}</Text>
-            <TouchableOpacity
-                onPress={() => {
-                    router.push(`/public_profile?email=${encodeURIComponent(item.ownerUsername)}`);
-                }}
-            >
-                <Text style={styles.ownerText}>Owner: {item.ownerUsername}</Text>
-            </TouchableOpacity>
-            {/* <Text>User: {item.ownerUsername}</Text> */}
+            <Text>User: {item.ownerUsername}</Text>
             <Text>Description: {item.description}</Text>
             <Text>Borrower Location Preference: {item.lendTo}</Text>
             <Text>Maximum Lending Duration: { `${item.timeAvailable}` } hours</Text>
@@ -75,12 +68,6 @@ const styles = StyleSheet.create({
         padding: 10,
         borderRadius: 8,
         alignItems: 'center',
-    },
-    ownerText: {
-        color: 'blue',
-        textDecorationLine: 'underline',
-        marginBottom: 4,
-        fontSize: 16
     },
 });
 
