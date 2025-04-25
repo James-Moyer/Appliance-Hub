@@ -42,7 +42,7 @@ export default function Login() {
     }
     try {
       // Sign in with Firebase Auth using email and password
-      console.log("signing in...");
+      // console.log("signing in...");
       let userCredential;
 
       try {
@@ -52,7 +52,7 @@ export default function Login() {
         return;
       }
       
-      console.log("Fetching token...");
+      // console.log("Fetching token...");
       // Retrieve the ID token (a JWT)
       const idToken = await userCredential.user.getIdToken();
       

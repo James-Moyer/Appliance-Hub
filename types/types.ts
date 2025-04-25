@@ -120,7 +120,6 @@ export interface ChatUsersProps {
 
 export interface ConversationProps {
     messages: MessageType[];
-    myUid: string;
     input: string;
     setInput: React.Dispatch<React.SetStateAction<string>>;
     sendMessage: () => void;
