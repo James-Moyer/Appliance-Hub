@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, Image, StyleSheet, TextInput, TouchableOpacity, Modal, ScrollView } from 'react-native';
+import { View, Text, Image, StyleSheet, TextInput, TouchableOpacity, Modal } from 'react-native';
 import { ProfileViewProps } from '../../types/types';
 import ApplianceList from '../ApplianceList';
 import RequestList from '../RequestList';
