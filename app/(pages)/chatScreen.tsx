@@ -145,10 +145,11 @@ export default function ChatScreen() {
       console.log("focused chat screen");
 
       return () => {
-        console.log("unfocused chat screen");
-        setCameFromRB(false);
+        setSelectedUser(null); // Send back to 'all chats' screen bc cameFromAb/RB seems to not be updating right
         setCameFromAB(false);
-      };
+        setCameFromRB(false);
+        // console.log("unfocused chat screen");
+      }
     }, [fromRequestBoard, fromApplianceBoard])
   );
 
@@ -302,16 +303,13 @@ export default function ChatScreen() {
       params: {},
     });
     
-    // Reset states based on where we came from, else stays in chat screen
+    // Reset states based on where we came from, else just stays in chat screen
     setSelectedUser(null);
     if (cameFromRB) {
       router.push("/requestBoard");
     } else if (cameFromAB) {
       router.push("/applianceBoard");
     }
-
-    setCameFromAB(false);
-    setCameFromRB(false);
   }
 
   return (
