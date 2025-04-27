@@ -18,7 +18,7 @@ const ChatUsers: React.FC<ChatUsersProps> = ({ allUsers, selectUser }) => {
       )}
       ListEmptyComponent={
         <Text style={{ marginTop: 20, textAlign: "center" }}>
-          No users found.
+          No chats found, find someone to talk to on the listings pages!
         </Text>
       }
     />
