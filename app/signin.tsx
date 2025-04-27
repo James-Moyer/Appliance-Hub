@@ -35,14 +35,14 @@ export default function Login() {
 
   // Handle login submission: authenticate with Firebase and retrieve an ID token
   const handleSubmit = async () => {
-    console.log("Logging in...");
+    // console.log("Logging in...");
     if (!form.email || !form.password) {
       Alert.alert('Error', 'Please fill in both email and password.');
       return;
     }
     try {
       // Sign in with Firebase Auth using email and password
-      console.log("signing in...");
+      // console.log("signing in...");
       let userCredential;
 
       try {
@@ -52,11 +52,11 @@ export default function Login() {
         return;
       }
       
-      console.log("Fetching token...");
+      // console.log("Fetching token...");
       // Retrieve the ID token (a JWT)
       const idToken = await userCredential.user.getIdToken();
       
-      console.log("Token: " + idToken);
+      // console.log("Token: " + idToken);
       // console.log("UID: " + userCredential.user.uid);
 
       await setContext({ // Sets context asynchoronously, needs to se entire context at once
