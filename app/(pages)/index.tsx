@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useContext } from 'react';
 import { Alert } from 'react-native';
 import { saveInStore, removeFromStore } from '../../helpers/keyfetch'; // local storage helpers
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { SessionContext } from '@/helpers/sessionContext';
 import { USERS_ENDPOINT, APPLIANCES_ENDPOINT, REQUESTS_ENDPOINT } from '../../constants/constants';
 import { auth } from '../firebase/firebaseConfig';
@@ -352,6 +352,14 @@ const ProfilePage: React.FC = () => {
         ]
       );
     };
+
+    // everytime we leave the page and come back, we want to refresh the requests and appliances
+    useFocusEffect(
+      React.useCallback(() => {
+        setRefreshRequests(true);
+        setRefreshAppliances(true);
+      }, [])
+    );
 
   // get info if not already done when the component mounts
   useEffect(() => {
