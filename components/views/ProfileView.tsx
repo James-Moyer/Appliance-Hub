@@ -85,7 +85,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({
         )}
 
         {editing ? (
-          <View style={{ flexDirection: "row", width: 110, height: 90, gap: 20, marginRight: 85, marginTop: -15}}>
+          <View style={{width: 120, height: 90, gap: 20, marginRight: 85, marginTop: -15}}>
             <TouchableOpacity
               style={[styles.button, { backgroundColor: '#219ebc' }]}
               onPress={handleSave}
@@ -261,18 +261,18 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   rowButtons: {
-    flexDirection: 'row',
     justifyContent: 'space-between',
     gap: 10,
-    marginTop: 20,
+    width: 150,
+    marginTop: 10,
   },
   smallButton: {
     padding: 3,
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    width: 55,
-    height: 47,
+    width: 150,
+    height: 33,
   },
   listsContainer: {
     flexDirection: 'column',
