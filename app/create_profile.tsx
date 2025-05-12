@@ -26,9 +26,6 @@ export default function CreateProfile() {
 
   // Handle input change
   const handleChange = (key: keyof typeof form, value: string) => {
-    if (key == "email") {
-      value = value.toLowerCase();
-    }
     setForm({ ...form, [key]: value });
   };
 
