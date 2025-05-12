@@ -271,12 +271,15 @@ export default function ChatScreen() {
 
       if (response.ok) {
         const newMessage: MessageType = {
-          senderUid: sessionContext.uid,
+          senderUid: sessionContext.UID,
           recipientUid: selectedUser.uid,
           text: textToSend,
           timestamp: Date.now(),
         };
-        if (messages) {
+
+        console.log(messages);
+
+        if (messages.length != 0) {
           setMessages((prev) => [...prev, newMessage]);
         } else {
           setMessages([newMessage]);
