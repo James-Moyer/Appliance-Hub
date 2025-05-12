@@ -277,7 +277,7 @@ export default function ChatScreen() {
           timestamp: Date.now(),
         };
 
-        console.log(messages);
+        // console.log(messages);
 
         if (messages.length != 0) {
           setMessages((prev) => [...prev, newMessage]);
